@@ -5,6 +5,9 @@ import { sql } from "@aihot/backend/db";
 import { API_PREFIX, approveRequestSchema, exportRequestSchema, rejectRequestSchema } from "../../contracts/api.ts";
 import { approvalGuards } from "../review/guards.ts";
 import { loadReviewDetail } from "../review/detail.ts";
+import { applyAuthorEdit, diffRevisions } from "../revisions/index.ts";
+import { saveRevisionRequestSchema } from "../../contracts/api.ts";
+import { listRevisions } from "../store/drafts.ts";
 import { approveDraft, rejectDraft } from "../store/review.ts";
 import { createExport } from "../store/delivery.ts";
 import { listDrafts, listTopics, pendingReviewCount } from "../board/index.ts";
@@ -23,7 +26,7 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
   app.get(EDITORIAL_HEALTH_PATH, editorialHandler(async (_req, reply, admin) => {
     // 私有接口统一 no-store，这里再确认一次，避免被上游中间件覆盖。
     reply.header("Cache-Control", "no-store");
-    return { ok: true, policy_version: policyVersion(), admin: admin.name };
+    return { ok: true, policy_version: policyVersion(), admin: admin.name, csrf: admin.csrf };
   }));
 
   /** 稿件队列：按状态过滤，游标分页；同时给出待审积压数，页面据此提示暂停自动起草。 */
@@ -46,6 +49,49 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     const detail = await loadReviewDetail(sql, draftId);
     if (!detail) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "稿件不存在" });
     return detail;
+  }));
+
+  /** 版本历史：每个版本附上相对上一版的差异，页面直接展示，不再自己算。 */
+  app.get(`${API_PREFIX}/drafts/:draftId/revisions`, editorialHandler(async (req) => {
+    const { draftId } = req.params as { draftId: string };
+    const history = await listRevisions(sql, draftId);
+    return {
+      items: history.map((revision, index) => {
+        const previous = history[index + 1] ?? null;
+        return {
+          revision,
+          diff: previous ? diffRevisions(previous, revision) : null,
+          is_current: index === 0,
+        };
+      }),
+    };
+  }));
+
+  /** 作者手动编辑：产生新版本、撤销批准、回自检；版本号不对就拒绝，不覆盖作者最新稿。 */
+  app.post(`${API_PREFIX}/drafts/:draftId/revisions`, editorialHandler(async (req, reply, admin) => {
+    const { draftId } = req.params as { draftId: string };
+    const body = saveRevisionRequestSchema.parse(req.body);
+    const detail = await loadReviewDetail(sql, draftId);
+    if (!detail || !detail.revision) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "稿件不存在或没有版本" });
+
+    const saved = await sql.begin((tx) =>
+      applyAuthorEdit(tx, {
+        draft_id: draftId,
+        expected_lock_version: body.expected_lock_version,
+        base_revision_id: detail.revision!.id,
+        content: {
+          title: body.title,
+          summary: body.summary,
+          body: body.body,
+          cover_asset_hash: body.cover_asset_hash,
+          captions: body.captions,
+          asset_hashes: body.asset_hashes,
+        },
+        policy_version: detail.revision!.policy_version,
+      }),
+    );
+    void admin;
+    return reply.code(201).send({ revision: saved.revision, draft: saved.draft, requeued: true, job_id: null });
   }));
 
   /** 人工批准：只有带管理员会话的请求能到这里，服务端与 worker 没有这条路径。 */

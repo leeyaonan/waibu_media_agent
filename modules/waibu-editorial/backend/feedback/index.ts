@@ -5,8 +5,8 @@
 // 2. 意见绑定的段落在新版本里找不到时，明确告诉作者“这条批注过期了”，不要猜位置；
 // 3. 建议没被采用时，当前稿保持不变——不能因为跑了一次改稿就覆盖作者的稿子。
 import type { Db, Tx } from "@aihot/backend/db";
-// 按意见改稿的出口固定是“重新自检”，不沿用内容变化的通用推导。
-import { canTransition } from "../../contracts/states.ts";
+// 按意见改稿与手动编辑共用同一个出口：重新自检。
+import { stateAfterAuthorEdit } from "../../contracts/states.ts";
 import type { RevisionContent } from "../../contracts/content.ts";
 import type { DraftRow, FeedbackRow, RevisionRow } from "../../contracts/entities.ts";
 import { appendRevision, getDraft } from "../store/drafts.ts";
@@ -108,8 +108,7 @@ export async function applyFeedbackRevision(tx: Tx, input: ReviseInput): Promise
     policy_version: input.policy_version,
     created_by: "model_after_feedback",
     expected_lock_version: input.expected_lock_version,
-    // 状态机里 revising → checking；从别的状态改稿也一样要重新自检。
-    next_state: canTransition(draft.state, "checking", "system") ? "checking" : draft.state,
+    next_state: stateAfterAuthorEdit(draft.state),
   });
   await resolveFeedback(tx, input.feedback_ids, applied.revision.id);
   return { revision: applied.revision, draft: applied.draft, resolved: input.feedback_ids.length };

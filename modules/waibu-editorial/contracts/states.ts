@@ -116,6 +116,15 @@ export function stateAfterContentChange(state: ArticleState): ArticleState {
   return state;
 }
 
+/**
+ * 作者改了内容之后稿件该去哪：一律回自检。
+ * 搁置与已驳回不自动恢复——那是作者另外的决定，不能由一次编辑顺带完成。
+ */
+export function stateAfterAuthorEdit(state: ArticleState): ArticleState {
+  if (state === "drafting" || state === "in_review" || state === "approved" || state === "exported") return "checking";
+  return state;
+}
+
 /** 任务是否还可以被恢复执行：失败、排队与运行中都可以重试，成功和取消不重试。 */
 export function taskRetryable(state: TaskState): boolean {
   return state === "queued" || state === "running" || state === "failed" || state === "paused_budget" || state === "waiting_input";

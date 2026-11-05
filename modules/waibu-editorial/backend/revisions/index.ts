@@ -6,7 +6,8 @@
 import type { Db, Tx } from "@aihot/backend/db";
 import { revisionRowSchema, type DraftRow, type RevisionRow } from "../../contracts/entities.ts";
 import { contentHash, normalizeRevisionContent, type RevisionContent } from "../../contracts/content.ts";
-import { stateAfterContentChange } from "../../contracts/states.ts";
+// 作者编辑的出口统一是“重新自检”，搁置与驳回不自动恢复。
+import { stateAfterAuthorEdit } from "../../contracts/states.ts";
 import { appendRevision, getDraft, lockDraft } from "../store/drafts.ts";
 import { row } from "../store/rows.ts";
 
@@ -22,7 +23,7 @@ export interface AuthorEditInput {
 /** 作者直接编辑：产生新版本、撤销批准、回到自检。 */
 export async function applyAuthorEdit(tx: Tx, input: AuthorEditInput): Promise<{ revision: RevisionRow; draft: DraftRow }> {
   const draft = await lockDraft(tx, input.draft_id);
-  const next = stateAfterContentChange(draft.state);
+  const next = stateAfterAuthorEdit(draft.state);
   return appendRevision(tx, {
     draft_id: input.draft_id,
     parent_id: input.base_revision_id,

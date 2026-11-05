@@ -43,6 +43,35 @@ export async function editorialGet<T>({ request, path, init }: ApiRequest): Prom
   return (await response.json()) as T;
 }
 
+export interface ApiPost extends ApiRequest {
+  body: unknown;
+  /** 写请求必须带会话里的 CSRF 令牌。 */
+  csrf: string;
+}
+
+/** 写请求：把浏览器带来的 cookie 与页面上的 CSRF 一起转给 api。 */
+export async function editorialPost<T>({ request, path, body, csrf }: ApiPost): Promise<T> {
+  const cookie = request.headers.get("cookie") ?? "";
+  const response = await fetch(`${API_BASE()}/api/admin/editorial${path}`, {
+    method: "POST",
+    headers: { accept: "application/json", "content-type": "application/json", cookie, "x-csrf-token": csrf },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    let code = `http_${response.status}`;
+    let detail = `请求失败（${response.status}）`;
+    try {
+      const problem = (await response.json()) as { code?: string; detail?: string };
+      code = problem.code ?? code;
+      detail = problem.detail ?? detail;
+    } catch {
+      // 非 JSON 错误体：保留状态码信息即可。
+    }
+    throw new ApiError(response.status, code, detail);
+  }
+  return (await response.json()) as T;
+}
+
 /** 会话是否有效：401 就当没登录，其他错误照常抛出（页面要区分“没登录”和“服务挂了”）。 */
 export async function editorialSignedIn(request: Request): Promise<boolean> {
   try {
