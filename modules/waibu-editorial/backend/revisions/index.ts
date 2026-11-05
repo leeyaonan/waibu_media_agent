@@ -13,7 +13,8 @@ import { row } from "../store/rows.ts";
 export interface AuthorEditInput {
   draft_id: string;
   expected_lock_version: number;
-  base_revision_id: string;
+  /** 首版没有父版本。 */
+  base_revision_id: string | null;
   content: RevisionContent;
   policy_version: string;
 }
