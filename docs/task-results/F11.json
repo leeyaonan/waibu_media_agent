@@ -1,0 +1,32 @@
+{
+  "task_id": "F11",
+  "plan_revision": "0.1.0",
+  "base_commit": "d9c7db1",
+  "branch": "develop",
+  "commits": ["41b9fd1"],
+  "files": [
+    "modules/waibu-editorial/backend/topics/rank.ts",
+    "modules/waibu-editorial/tests/topics.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/topics.test.ts",
+      "exit_code": 0,
+      "evidence": "9 项通过：无证据排除、摘要稿可选、一手更新过门槛、排序截断、skipped 原因、去重键、阈值可配、方向贴合度、候选字段"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "91 项通过（模块 83 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-011",
+      "result": "PASS",
+      "note": "高热低证据样本：没有素材的 story 直接排除（excluded_because=没有可用素材），证据不足的候选保留但排在合格候选之后，不进入起草；低热一手更新样本通过门槛并给出可读理由（“独立来源 2 条，可写性…，新鲜度…”）。无候选时返回 { skipped: true, reason } 两种口径（没有资料 / 都不满足门槛）。阈值与权重是参数（DEFAULT_THRESHOLDS/DEFAULT_WEIGHTS），测试里把 min_independent_sources 调到 2 后同一素材被排除，证明可配置。热度没有进入评分维度——它是筛选输入，不是证据。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F12 历史选题去重（依赖 F11+F18）", "F14 工作流编排（依赖 F05+F06+F12）"]
+}
