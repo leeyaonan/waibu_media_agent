@@ -1,0 +1,35 @@
+{
+  "task_id": "F34",
+  "plan_revision": "0.1.0",
+  "base_commit": "2df2964",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/export/zip.ts",
+    "modules/waibu-editorial/backend/export/package.ts",
+    "modules/waibu-editorial/backend/export/run.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（导出执行与下载）",
+    "modules/waibu-editorial/tests/export-package.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/export-package.test.ts",
+      "exit_code": 0,
+      "evidence": "5 项通过：ZIP 结构与 CRC32（hello → 3610a686）、同名条目去重、包内 8 个必需文件 + images/ 原文件、素材缺失时导出 failed 且稿件仍停在 approved、同一导出重试得到相同 manifest hash 与相同文件名"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "234 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-034",
+      "result": "PASS",
+      "note": "事务读取批准与版本：createExport 在事务内锁稿件、查有效批准，批准 id/版本/内容不一致都拒绝（F20 已测），随后才过排版校验闸门（F33）。ZIP+manifest+文件 hash：自带最小 ZIP 写入器（store 模式、CRC32），每个文件记路径/字节数/sha256，manifest 的 hash 由文件清单内容决定，同一导出重试得到完全相同的 manifest hash 与 zip 文件名。私有下载：GET /exports/:id/download 走管理员会话，未登录 401；批准失效后返回 409 export_stale，旧包不再作为正式包提供。成功后才 exported：finishExport 仅在 succeeded 时推进状态，失败写 failed 且稿件保持 approved（测试断言）。未批准/过期批准/素材缺失都不能导出：分别由批准闸门、asset_rights_unknown/asset_not_found、素材文件缺失时 export_failed 覆盖。导出中改稿导致批准撤销时，旧包下载被 export_stale 拦下。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F36 每日调度（P4 最后一项）", "F35 手工发布登记"]
+}
