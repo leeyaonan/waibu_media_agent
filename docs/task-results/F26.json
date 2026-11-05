@@ -1,0 +1,41 @@
+{
+  "task_id": "F26",
+  "plan_revision": "0.1.0",
+  "base_commit": "6bc4f3c",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/migrations/0227_waibu_idempotency.sql",
+    "modules/waibu-editorial/backend/idempotency/index.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（意见接口）",
+    "modules/waibu-editorial/web/review.tsx（意见表单与状态）",
+    "modules/waibu-editorial/tests/feedback-api.test.ts",
+    "modules/waibu-editorial/tests/browser/feedback-check.mjs"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/feedback-api.test.ts",
+      "exit_code": 0,
+      "evidence": "6 项通过：推进到 revising、同键重发只一份、同键不同内容 409、旧版本意见冲突不落库、改稿失败保留意见、缺 CSRF 403"
+    },
+    {
+      "command": "tools/feedback-e2e.sh（真实 Chromium）",
+      "exit_code": 0,
+      "evidence": "提交后提示“意见已提交，稿件进入改稿中”，意见出现在列表（0→1），状态行为 revising"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "188 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-026",
+      "result": "PASS",
+      "note": "重复提交同 Idempotency-Key：第一次 202 并新建，第二次 200 且 replayed=true、feedback id 相同，库里只有 1 条意见——同一点击重发不会创建多份改稿；同一个键配不同内容返回 409 idempotency_conflict。旧稿意见冲突明确：针对已不是当前版本的 revision 提意见返回 409 conflict_version，且不落库（断言 0 条）。改稿失败保留意见：模拟 revise 阶段失败后，意见文本仍在、resolution_revision_id 为 null、稿件状态停在 revising——作者的输入不会因为任务失败而消失。页面侧：提交后意见立即出现在列表并标注待处理/已落实，状态行显示 revising。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F28 运行与费用面板", "F29 编辑策略配置页", "F30 封面与素材清单（P4 开始）"]
+}
