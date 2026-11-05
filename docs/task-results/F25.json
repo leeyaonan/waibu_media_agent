@@ -1,0 +1,43 @@
+{
+  "task_id": "F25",
+  "plan_revision": "0.1.0",
+  "base_commit": "5736d3f",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/http-auth/routes.ts（版本历史与保存接口）",
+    "modules/waibu-editorial/contracts/states.ts（stateAfterAuthorEdit）",
+    "modules/waibu-editorial/backend/revisions/index.ts",
+    "modules/waibu-editorial/backend/feedback/index.ts",
+    "modules/waibu-editorial/web/review.tsx（编辑表单 + action）",
+    "modules/waibu-editorial/web/api.ts（写请求通道）",
+    "modules/waibu-editorial/tests/revision-save.test.ts",
+    "modules/waibu-editorial/tests/browser/revision-save-check.mjs"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/revision-save.test.ts",
+      "exit_code": 0,
+      "evidence": "5 项通过：保存成新版本并回自检、过期版本号 409 且不新增版本、保存后旧批准作废、版本历史差异正确、缺 CSRF 403"
+    },
+    {
+      "command": "tools/revision-e2e.sh（真实 Chromium，两个标签页同时编辑）",
+      "exit_code": 0,
+      "evidence": "A 页保存成功（历史 1→2，状态 checking，正文为新内容）；B 页带过期版本号提交返回 conflict_version 并提示“刷新后再改”；历史仍为 2，A 的正文没有被覆盖"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "182 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-025",
+      "result": "PASS",
+      "note": "双标签页提交：两个标签页打开同一篇稿子时 expected_lock_version 相同；A 提交成功，B 再提交被 409 conflict_version 拒绝，页面提示“稿件在别处已经变过，刷新后再改”，库里版本只增加 1 个，A 的正文没有被 B 覆盖——真实浏览器实测，不是仅接口断言。回退保留历史：版本行只插入不更新，历史接口按时间倒序返回全部版本，每个版本附相对上一版的标题/摘要/正文段落差异；首版 diff 为 null。素材变化也可见：版本不覆盖素材引用，content_hash 覆盖素材 hash（F02 契约），改素材会换 hash 从而换版本。状态去向统一为自检（stateAfterAuthorEdit），搁置与驳回不会被一次编辑顺带恢复。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F26 意见提交与改稿进度", "F27 批准及导出入口"]
+}
