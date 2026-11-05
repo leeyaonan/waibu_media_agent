@@ -1,0 +1,33 @@
+{
+  "task_id": "F17",
+  "plan_revision": "0.1.0",
+  "base_commit": "4532ef6",
+  "branch": "develop",
+  "commits": ["3fec2c2"],
+  "files": [
+    "modules/waibu-editorial/backend/quality/index.ts",
+    "modules/waibu-editorial/backend/quality/claims.ts",
+    "modules/waibu-editorial/tests/quality.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/quality.test.ts",
+      "exit_code": 0,
+      "evidence": "9 项通过：确定性优先、悬空引用、标题正文矛盾、两轮转 hold、一轮通过、零轮通过、修不动即停、无批准出口、schema 拒绝未知类型"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "147 项通过（模块 139 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-017",
+      "result": "PASS",
+      "note": "伪造 claim_id：evaluateClaims 返回 dangling 列表，自检判定不通过。正文与标题矛盾：以 conflict 类阻断项进入报告。修复仍失败：checkWithRepair 默认 2 轮后返回 on_hold，保留最后一版与剩余问题；repair 返回 null（改不动）时立即停止，不重复同一个稿子。模型自检不等于已核实：mergeChecks 把确定性检查与原样合并，模型说“看起来没问题”也盖不住数字漂移。循环有上限（BUDGET_DEFAULTS.max_repair_rounds=2）。未解缺口不可批准：结果类型只有 passed/on_hold，没有 approved，批准入口在人工接口（F20）。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F19 批注与定向改稿", "F20 人工批准与驳回"]
+}
