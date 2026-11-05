@@ -40,7 +40,7 @@ export async function runExport(db: Db, exportId: string): Promise<RunExportResu
       dataDir: config.dataDir,
     });
 
-    await sql.begin((tx) => finishExport(tx, exportId, { status: "succeeded", manifest_hash: built.manifestHash }));
+    await sql.begin((tx) => finishExport(tx, exportId, { status: "succeeded", manifest_hash: built.manifestHash, path: built.zipPath }));
     return { exportId, status: "succeeded", zipPath: built.zipPath, manifestHash: built.manifestHash, error: null };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

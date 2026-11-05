@@ -1,0 +1,41 @@
+{
+  "task_id": "F39",
+  "plan_revision": "0.1.0",
+  "base_commit": "dac0e8f",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "tools/backup.sh",
+    "tools/restore-drill.sh",
+    "docs/project/09-deployment.md",
+    "Dockerfile（Chromium、可选 apt/npm 镜像、校验器浏览器路径）",
+    "modules/waibu-editorial/backend/store/delivery.ts（成功时记录真实包路径）",
+    "modules/waibu-editorial/backend/export/run.ts"
+  ],
+  "tests": [
+    {
+      "command": "tools/backup.sh（waibu_smoke 与 waibu_e2e 各一次）",
+      "exit_code": 0,
+      "evidence": "产出 db.dump（pg_dump 自定义格式）、data.tar.gz（素材与发布包）、SHA256SUMS；两次都成功"
+    },
+    {
+      "command": "tools/restore-drill.sh <备份目录>（隔离库 waibu_restore + 临时目录）",
+      "exit_code": 0,
+      "evidence": "清单校验 OK；恢复出 53 篇草稿与 1 个附件，附件字节 sha256 与库中记录一致；另一次恢复出 1 次成功导出，从 zip 取 manifest.json 重算 sha256 与库中 manifest_hash 一致（7 个文件，包 4971 字节），打印 RESTORE_OK"
+    },
+    {
+      "command": "docker build --build-arg NPM_REGISTRY=https://registry.npmmirror.com --build-arg APT_MIRROR=mirrors.aliyun.com -t waibu-app:local .",
+      "exit_code": 0,
+      "evidence": "镜像 1.82GB 构建成功；容器内 node v24.22.2、/usr/bin/chromium、/app/modules/waibu-editorial/package.json 都在"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-039",
+      "result": "PASS",
+      "note": "备份恢复含 DB 与素材：backup.sh 同时导出 pg_dump 自定义格式与素材/发布包 tar，并写 SHA256SUMS；restore-drill.sh 在隔离数据库 waibu_restore 与临时目录恢复，不碰在用数据。包 hash 一致：从恢复后的导出包 zip 里取出 manifest.json，用与生成时相同的算法重算 sha256，与库中 manifest_hash 逐字比对通过（7 个文件）。附件一致性：附件文件字节 sha256 与 waibu_assets.hash 相等。这轮还修了一个真 bug：导出成功时库里记的仍是占位路径，导致备份恢复后找不到包；现在 finishExport 会写入真实 zip 路径。回退代码不破坏数据：迁移只追加、发布包 hash 由数据库记录约束，09-deployment.md 写明回退步骤与“不要回退到删过列的版本”。未配置真实凭据不启付费：MODEL_CALLS_ENABLED 默认 false，模型阶段以 model_off 停下而不是产空稿；文档给出上线前 printenv 核对方式。Docker：镜像构建成功且容器内 Node/Chromium/模块都在（受限网络需带 npm 与 apt 镜像参数，已写进文档）。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["docker compose 起全套并做一次容器内冒烟（本轮未做，镜像已就绪）", "F40 真实试运行（不在本轮范围）"]
+}

@@ -81,11 +81,12 @@ export async function createExport(db: Tx, input: CreateExportInput): Promise<Ex
 export async function finishExport(
   db: Tx,
   exportId: string,
-  input: { status: "succeeded" | "failed"; manifest_hash?: string },
+  input: { status: "succeeded" | "failed"; manifest_hash?: string; path?: string },
 ): Promise<ExportRow> {
   const [saved] = await db`
     update waibu_exports set status = ${input.status},
-      manifest_hash = coalesce(${input.manifest_hash ?? null}, manifest_hash)
+      manifest_hash = coalesce(${input.manifest_hash ?? null}, manifest_hash),
+      path = coalesce(${input.path ?? null}, path)
     where id = ${exportId}
     returning *`;
   if (input.status === "succeeded") {
