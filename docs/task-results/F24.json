@@ -1,0 +1,41 @@
+{
+  "task_id": "F24",
+  "plan_revision": "0.1.0",
+  "base_commit": "d664cdb",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/review/detail.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（详情接口）",
+    "modules/waibu-editorial/web/review.tsx",
+    "modules/waibu-editorial/module.ts（注册审核页）",
+    "modules/waibu-editorial/tests/review-detail.test.ts",
+    "modules/waibu-editorial/tests/browser/review-check.mjs"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/review-detail.test.ts",
+      "exit_code": 0,
+      "evidence": "4 项通过：段落与事实对应（价格段→价格证据、版本段→版本证据，不串号）、未登录 401、不存在 404、批准状态为 null"
+    },
+    {
+      "command": "tools/review-e2e.sh（真实 Chromium 390×844 + 含 <script>/onerror 的证据）",
+      "exit_code": 0,
+      "evidence": "标题与 2 个正文段渲染；点“看证据”后摘录原文可见（含 <script> 与 onerror 字样）；window.__xss 未被赋值；blockquote 内真实 script/img 节点数为 0；输入后出现未保存提示；横向溢出 0px"
+    },
+    {
+      "command": "node --test … tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "14 项架构约束通过（北京时间只在 contracts/time 转换）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-024",
+      "result": "PASS",
+      "note": "点击事实展示正确摘录：接口层的 block_id → claim_id → evidence 三段关系有测试断言，价格段取到“订阅价格为每月 20 美元”，版本段取到“当前版本号 v3.2”，互不串号；页面上点“看证据”在抽屉里显示该事实自己的来源与摘录。脚本标签被清理：证据摘录用 React 文本节点渲染，不经 dangerouslySetInnerHTML；真实浏览器里塞入 <script>window.__xss=1</script> 与 <img onerror> 后，摘录原文可见但 window.__xss 未定义、blockquote 内真实 script/img 节点数为 0、无对话框。未保存修改有提示：输入后出现提示文案并注册 beforeunload 拦截关闭/刷新。换稿不丢已保存版本：版本行只插入不更新（F18 已测），页面不写入任何版本，F25 接入保存后才产生新行。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F25 版本差异与手动编辑（保存新版本）", "F26 意见提交与改稿进度", "F27 批准及导出入口"]
+}
