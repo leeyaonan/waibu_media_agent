@@ -58,16 +58,56 @@ export async function loader({ request, params }: { request: Request; params: Re
   }
 }
 
-export const headers = () => ({ "Cache-Control": "no-store" });
-
-/** 保存新版本：页面提交表单，服务端按会话 + CSRF 转发给 api。 */
+/** 页面上的写操作：保存、批准、驳回、导出。全部走会话 + CSRF，服务端仍是最终门禁。 */
 export async function action({ request, params }: { request: Request; params: Record<string, string | undefined> }): Promise<{ ok: boolean; message: string }> {
   const form = await request.formData();
+  const intent = String(form.get("intent") ?? "save");
+  const draftPath = `/drafts/${params.draftId ?? ""}`;
+  const csrf = String(form.get("csrf") ?? "");
+
   try {
+    if (intent === "approve") {
+      await editorialPost({
+        request,
+        path: `${draftPath}/approvals`,
+        csrf,
+        body: {
+          expected_revision_id: String(form.get("expected_revision_id") ?? ""),
+          expected_content_hash: String(form.get("expected_content_hash") ?? ""),
+          expected_lock_version: Number(form.get("expected_lock_version") ?? 0),
+        },
+      });
+      return { ok: true, message: "已批准当前版本。" };
+    }
+    if (intent === "reject") {
+      await editorialPost({
+        request,
+        path: `${draftPath}/reject`,
+        csrf,
+        body: {
+          reason: String(form.get("reason") ?? ""),
+          expected_revision_id: String(form.get("expected_revision_id") ?? ""),
+          expected_lock_version: Number(form.get("expected_lock_version") ?? 0),
+        },
+      });
+      return { ok: true, message: "已驳回，原因已记录。" };
+    }
+    if (intent === "export") {
+      await editorialPost({
+        request,
+        path: `${draftPath}/exports`,
+        csrf,
+        body: {
+          expected_revision_id: String(form.get("expected_revision_id") ?? ""),
+          expected_approval_id: String(form.get("expected_approval_id") ?? ""),
+        },
+      });
+      return { ok: true, message: "已提交导出任务，完成后可下载发布包。" };
+    }
     await editorialPost({
       request,
-      path: `/drafts/${params.draftId ?? ""}/revisions`,
-      csrf: String(form.get("csrf") ?? ""),
+      path: `${draftPath}/revisions`,
+      csrf,
       body: {
         title: String(form.get("title") ?? ""),
         summary: String(form.get("summary") ?? ""),
@@ -79,12 +119,15 @@ export async function action({ request, params }: { request: Request; params: Re
     return { ok: true, message: "已保存为新版本，稿件回到自检。" };
   } catch (error) {
     if (error instanceof ApiError) {
-      const hint = error.status === 409 ? "稿件在别处已经变过，刷新后再改。" : error.message;
-      return { ok: false, message: `保存失败：${hint}（${error.code}）` };
+      if (error.status === 409) return { ok: false, message: `操作被拒绝：稿件或批准的版本已经变了，刷新后再试。（${error.code}）` };
+      if (error.status === 422) return { ok: false, message: `还不能批准：${error.message}（${error.code}）` };
+      return { ok: false, message: `失败：${error.message}（${error.code}）` };
     }
-    return { ok: false, message: "保存失败：连不上 api 进程。" };
+    return { ok: false, message: "失败：连不上 api 进程。" };
   }
 }
+
+export const headers = () => ({ "Cache-Control": "no-store" });
 
 const styles = `
 .wb-review{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
@@ -286,9 +329,45 @@ export default function EditorialReview(): ReactNode {
 
           <h2 style={{ marginTop: 18 }}>批准</h2>
           {detail.approval ? (
-            <p className="wb-sub">已于 {beijingStamp(detail.approval.approved_at)} 批准</p>
+            <>
+              <p className="wb-sub">已于 {beijingStamp(detail.approval.approved_at)} 批准</p>
+              <Form method="post">
+                <input type="hidden" name="intent" value="export" />
+                <input type="hidden" name="csrf" value={data.csrf} />
+                <input type="hidden" name="expected_revision_id" value={detail.approval.revision_id} />
+                <input type="hidden" name="expected_approval_id" value={detail.approval.id} />
+                <div className="wb-actions">
+                  <button type="submit" data-primary="true" disabled={busy}>生成发布包</button>
+                </div>
+              </Form>
+            </>
           ) : (
-            <p className="wb-sub">尚未批准。批准入口见队列页上方的说明；批准能力已在 F20 落地为接口。</p>
+            <>
+              <p className="wb-sub">尚未批准。批准后才会出现导出入口。</p>
+              <Form method="post">
+                <input type="hidden" name="intent" value="approve" />
+                <input type="hidden" name="csrf" value={data.csrf} />
+                <input type="hidden" name="expected_revision_id" value={detail.revision.id} />
+                <input type="hidden" name="expected_content_hash" value={detail.revision.content_hash} />
+                <input type="hidden" name="expected_lock_version" value={detail.draft.lock_version} />
+                <div className="wb-actions">
+                  <button type="submit" data-primary="true" disabled={busy}>批准这一版</button>
+                </div>
+              </Form>
+              <Form method="post">
+                <input type="hidden" name="intent" value="reject" />
+                <input type="hidden" name="csrf" value={data.csrf} />
+                <input type="hidden" name="expected_revision_id" value={detail.revision.id} />
+                <input type="hidden" name="expected_lock_version" value={detail.draft.lock_version} />
+                <div className="wb-field">
+                  <label htmlFor="wb-reason">驳回原因</label>
+                  <input id="wb-reason" name="reason" placeholder="例如：角度不对，换一个" />
+                </div>
+                <div className="wb-actions">
+                  <button type="submit" disabled={busy}>驳回</button>
+                </div>
+              </Form>
+            </>
           )}
           <p className="wb-sub">稿件 {params.draftId}</p>
         </aside>
