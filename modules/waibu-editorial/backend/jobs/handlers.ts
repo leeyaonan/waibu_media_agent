@@ -15,7 +15,9 @@ import { getDraft, getRevision, linkRevisionClaims, listClaims } from "../store/
 import { evidenceFor } from "../evidence/store.ts";
 import { applyAuthorEdit, applyGeneratedRevision } from "../revisions/index.ts";
 import { latestStepPayload } from "../store/runs.ts";
-import { registerStageHandler, type StageContext } from "./stage.ts";
+import { registerStageHandler, setStageAdvancer, type StageContext } from "./stage.ts";
+import { draftIdFromPayload, makeAdvancer } from "./advance.ts";
+import { sql } from "@aihot/backend/db";
 
 /** 采集结果里我们关心的字段。生产由采集任务提供，测试用 fixture 注入。 */
 export interface CandidateStory {
@@ -220,7 +222,9 @@ async function checkStage(context: StageContext, deps: HandlerDeps): Promise<{ o
 }
 
 /** 装配：四个阶段接到流水线；没注册的阶段会在跑到它时明确报错。 */
-export function registerPipelineHandlers(deps: HandlerDeps): void {
+export async function registerPipelineHandlers(deps: HandlerDeps): Promise<void> {
+  // 阶段成功后自动推进下一阶段：没有这一步，队列跑完证据阶段就停了。
+  setStageAdvancer(await makeAdvancer(sql, { draftIdOf: draftIdFromPayload }));
   registerStageHandler("evidence", (context) => evidenceStage(context, deps));
   registerStageHandler("outline", (context) => outlineStage(context, deps));
   registerStageHandler("draft", (context) => draftStage(context, deps));

@@ -24,7 +24,8 @@ const fixtureStories: StorySource = {
   },
 };
 
-registerPipelineHandlers({ stories: fixtureStories });
+// 装配阶段实现与推进器；顶层 await 在模块加载时完成。
+await registerPipelineHandlers({ stories: fixtureStories });
 
 export default defineServerModule({
   name: "waibu-editorial",

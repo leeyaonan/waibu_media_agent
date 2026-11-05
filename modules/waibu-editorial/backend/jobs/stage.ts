@@ -30,6 +30,13 @@ export type StageHandler = (context: StageContext) => Promise<StageResult>;
 
 const handlers = new Map<Stage, StageHandler>();
 
+/** 阶段成功后由装配层决定下一阶段怎么入队；没接推进器时流水线只跑一步。 */
+let advancer: ((context: { job: PipelineJob; result: StageResult }) => Promise<void>) | null = null;
+
+export function setStageAdvancer(fn: (context: { job: PipelineJob; result: StageResult }) => Promise<void>): void {
+  advancer = fn;
+}
+
 /** 各任务在模块装配时注册自己的阶段实现；没注册的阶段会明确报错，而不是静默跳过。 */
 export function registerStageHandler(stage: Stage, handler: StageHandler): void {
   handlers.set(stage, handler);
@@ -105,10 +112,14 @@ export async function executePipelineJob(job: PipelineJob): Promise<PipelineOutc
   const step = claimed.step;
 
   try {
+    let produced: StageResult | null = null;
     await sql.begin(async (tx) => {
       const result = await handler({ db: tx, job });
+      produced = result;
       await finishStep(tx, step.id, "succeeded", { output_ref: result.output_ref, receipt_id: result.receipt_id ?? null, payload: result.payload });
     });
+    // 事务提交之后才推进：提交回滚时不会留下“下一步已入队但本步没成功”的悬空任务。
+    if (produced && advancer) await advancer({ job, result: produced });
     return "executed";
   } catch (error) {
     // 事务已回滚，业务写入不会留下半成品；这里单独记失败原因，供页面和排障读。

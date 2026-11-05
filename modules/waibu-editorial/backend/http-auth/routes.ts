@@ -25,6 +25,11 @@ import { assertSafeHtml, renderWechat } from "../render/index.ts";
 import { VALIDATOR_ID, runOfficialValidation } from "../validate/index.ts";
 import { latestValidation, saveValidation } from "../validate/store.ts";
 import { runExport } from "../export/run.ts";
+import { createRun } from "../store/runs.ts";
+import { PIPELINE_VERSION } from "../../contracts/pipeline.ts";
+import { planStages } from "../workflow/index.ts";
+import { beijingDate } from "@aihot/contracts/time";
+import { enqueuePipeline } from "../jobs/queue.ts";
 import { appendErrata, importExternalEdit, publicationHistory, registerPublication } from "../publication/index.ts";
 import { buildExportPackage } from "../export/package.ts";
 import { getExport } from "../store/delivery.ts";
@@ -63,6 +68,29 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
   app.get(`${API_PREFIX}/topics`, editorialHandler(async (req) => {
     const query = listQuerySchema.parse(req.query);
     return listTopics(sql, { cursor: query.cursor, limit: query.limit });
+  }));
+
+  /** 手动触发一次运行：建 run 并入队证据阶段；定时任务走 schedule 模块。 */
+  app.post(`${API_PREFIX}/runs`, editorialHandler(async (req, reply) => {
+    const body = req.body as { business_date?: string; mode?: string };
+    const businessDate = body?.business_date ?? beijingDate(new Date());
+    const run = await createRun(sql, {
+      business_date: businessDate,
+      mode: "manual",
+      pipeline_version: PIPELINE_VERSION,
+      input_hash: `sha256:${"0".repeat(64)}`,
+    });
+    const stages = planStages({
+      policy_version: "v1",
+      prompt_version: "common",
+      model_config_hash: "default",
+      evidence_hashes: [],
+      base_revision_id: null,
+      feedback_ids: [],
+    });
+    const first = stages[0]!;
+    await enqueuePipeline(sql, { run_id: run.id, stage: first.stage, draft_id: null, base_revision_id: null, input_hash: first.input_hash, attempt: 1 });
+    return reply.code(202).send({ run });
   }));
 
   /** 运行列表：最近若干次，带阶段完成数与 token。 */
