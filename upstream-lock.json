@@ -7,8 +7,20 @@
   "timezone": "Asia/Shanghai",
   "local_reference": "../references/AIHOT",
   "checkout_mode": "shallow-clone",
-  "integration_status": "reference-only",
+  "integration_status": "source-imported",
   "planned_integration": "pinned-source-import-with-editorial-module",
   "code_license": "MIT",
-  "notice": "AIHOT name and logo are excluded; retain upstream LICENSE, NOTICE and third-party licenses when importing source."
+  "notice": "AIHOT name and logo are excluded; retain upstream LICENSE, NOTICE and third-party licenses when importing source.",
+  "integrated_on": "2026-11-05",
+  "imported_commit": "cd424b0a513c7c8535b6f291b106a3086d6b75bf",
+  "import_manifest": "docs/upstream/AIHOT/import-manifest.json",
+  "integration_note": "F01 完成源码导入：上游 686 个跟踪文件全部有去向（659 原位、25 归档到 docs/upstream/AIHOT、1 合并忽略规则、1 排除 .claude）。运行集成与模块总装在 F37，届时再更新状态。",
+  "preserved_on_import": [
+    "AGENTS.md",
+    "README.md",
+    ".gitignore",
+    "upstream-lock.json",
+    "docs/project/",
+    "outputs/"
+  ]
 }

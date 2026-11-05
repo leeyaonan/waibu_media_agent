@@ -23,5 +23,11 @@ playwright-report/
 .venv/
 __pycache__/
 
+# 上游 AIHOT 追加的构建与字体产物（合并自上游 .gitignore，不整文件覆盖）
+.cache/
+apps/web/build/
+package/
+fontsource-noto-sans-sc-*.tgz
+
 # Local reference checkouts must not become product files
 references/
