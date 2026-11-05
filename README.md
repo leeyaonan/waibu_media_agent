@@ -2,7 +2,9 @@
 
 为「AI歪布抠腚」建设的公众号文章 Agent：每天自动发现信息、选择值得写的题材、整理证据并起草文章；作者审核、提出修改意见，审核通过后导出发布包，由作者手动发布到公众号。
 
-**当前状态：设计阶段，尚无可运行的产品代码。** 本次只建立规范与实施方案，未安装运行依赖、配置模型密钥、启用定时任务或发布内容。
+**当前状态：开发中。** 引擎（AIHOT `cd424b0`）已导入并通过本机基线检查，共享契约 v1 已冻结；
+`modules/waibu-editorial/` 只有契约，还没有采集、选题、起草、审核与导出功能。进度以
+[功能实施计划 Excel](outputs/2026-11-05-plan/waibu_media_agent_功能实施计划.xlsx) 的任务表为准。
 
 ## 方案选择
 
@@ -22,6 +24,8 @@ AIHOT 的日报和摘要是写作素材，公众号文章另有自己的证据�
 4. [分阶段实施与验收](docs/project/03-implementation.md)
 5. [公众号编辑规范](docs/project/04-editorial-policy.md)
 6. [交给 OpenCode / DSH 的任务说明](docs/project/05-agent-handoff.md)
+7. [共享契约 v1](docs/project/06-contracts-v1.md)
+8. [本机开发与自测](docs/project/dev-setup.md)
 
 ## 本地工作区
 

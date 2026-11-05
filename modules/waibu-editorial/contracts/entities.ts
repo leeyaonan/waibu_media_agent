@@ -73,10 +73,10 @@ export const EVIDENCE_VALIDITY = ["valid", "changed", "withdrawn"] as const;
 
 export const evidenceRowSchema = z.object({
   id: uuid,
-  /** AIHOT 信源 id。 */
-  source_id: uuid,
-  /** AIHOT 文章 id（数字）；素材适配器写入。 */
-  article_id: z.number().int().positive(),
+  /** AIHOT 信源 id（引擎里是 text）。 */
+  source_id: z.string().min(1).max(80),
+  /** AIHOT 文章 id（引擎 articles.id 是 text，不是数字）；素材适配器写入。 */
+  article_id: z.string().min(1).max(80),
   url: z.string().url().max(2000),
   /** 原文发布时间，可能缺失。 */
   published_at: iso.nullable(),
@@ -114,6 +114,8 @@ export const draftRowSchema = z.object({
   approved_revision_id: uuid.nullable(),
   /** 乐观并发版本号，每次写状态或换 current_revision 都 +1。 */
   lock_version: z.number().int().min(1),
+  /** 作者驳回原因；非 rejected 状态为空。 */
+  reject_reason: z.string().max(500).nullable(),
   created_at: iso,
   updated_at: iso,
 });

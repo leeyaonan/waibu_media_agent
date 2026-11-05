@@ -12,6 +12,8 @@
     "./web": "./web.tsx"
   },
   "dependencies": {
+    "@aihot/backend": "*",
+    "@aihot/contracts": "*",
     "zod": "4.6.6"
   }
 }

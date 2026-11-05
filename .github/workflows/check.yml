@@ -5,7 +5,7 @@ name: Check
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
   workflow_dispatch:
 
@@ -25,12 +25,12 @@ jobs:
         image: postgres:17-alpine
         env:
           POSTGRES_PASSWORD: ci
-          POSTGRES_DB: aihot_ci
+          POSTGRES_DB: waibu_ci
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 5s --health-retries 30
     env:
-      DATABASE_URL: postgres://postgres:ci@127.0.0.1:5432/aihot_ci
+      DATABASE_URL: postgres://postgres:ci@127.0.0.1:5432/waibu_ci
       SITE_URL: http://127.0.0.1:3000
       API_BASE_URL: http://127.0.0.1:3001
       SESSION_SECRET: ci-session-secret-0123456789abcdef
@@ -41,7 +41,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           package-manager-cache: false
 
       - name: Install
@@ -72,7 +72,7 @@ jobs:
       - name: Web tests
         run: npm run test:web
 
-      # Each test file runs on its own copy of aihot_ci (tests/databases.ts), which the run migrates and
+      # Each test file runs on its own copy of waibu_ci (tests/databases.ts), which the run migrates and
       # leaves empty; the smoke check then reads that empty database.
       - name: Backend tests
         run: npm test
@@ -98,7 +98,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           package-manager-cache: false
       - name: Configure a throwaway site
         run: |
