@@ -20,6 +20,8 @@ export interface MaterialSource {
   excerpt: string;
   /** quotation：只引用摘录；public：来源允许转载。 */
   rights: "quotation" | "public";
+  /** 是否抓到了正文；只有标题/摘要的来源不能支撑具体数字。 */
+  body_available: boolean;
   /** 该条素材的快照 hash，内容或来源变化都会变。 */
   hash: string;
 }
@@ -71,6 +73,7 @@ function toSource(row: ArticleRow): MaterialSource {
     excerpt,
     // 只有来源在 publications 上明确允许转载时才记 public。
     rights: row.syndicate ? "public" : "quotation",
+    body_available: Boolean(row.body_text && row.body_text.trim().length > 0),
     hash: materialHash({ article_id: row.id, url: row.url, published_at: published, excerpt }),
   };
 }
