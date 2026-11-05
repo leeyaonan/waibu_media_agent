@@ -1,0 +1,32 @@
+{
+  "task_id": "F15",
+  "plan_revision": "0.1.0",
+  "base_commit": "cd5cdfa",
+  "branch": "develop",
+  "commits": ["703b93a"],
+  "files": [
+    "modules/waibu-editorial/backend/outline/index.ts",
+    "modules/waibu-editorial/tests/outline.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/outline.test.ts",
+      "exit_code": 0,
+      "evidence": "8 项通过：材料缺口、走提纲的两条分支、引用不存在事实、事实漏用、提示词只暴露编号、模型输出校验、schema 拒绝不合规结构、序列化往返"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "120 项通过（模块 112 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-015",
+      "result": "PASS",
+      "note": "无作者体验但要求实测稿：decideOutlineMode 返回 material_gap，materialGap 给出缺口说明与替代方案（改成资料分析稿），不生成任何假装写过的提纲——这条判断不经过模型，模型无法替作者提供经历。有材料或不需要亲历时走证据提纲。提纲校验是确定性的：引用不存在的 claim、有事实没被任何一节使用都会导致 ok=false；提示词只列已核实事实的编号并要求缺口写进 gaps。模型调用用本地 stub 验证，解析后当场校验。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F16 长文与标题摘要生成（依赖 F15）", "F14 工作流编排（依赖 F05+F06+F12，已就绪）"]
+}
