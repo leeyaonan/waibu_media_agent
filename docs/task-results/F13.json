@@ -1,0 +1,37 @@
+{
+  "task_id": "F13",
+  "plan_revision": "0.1.0",
+  "base_commit": "19929e7",
+  "branch": "develop",
+  "commits": ["cd5cdfa"],
+  "files": [
+    "modules/waibu-editorial/backend/author-input/index.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（材料下载路由）",
+    "modules/waibu-editorial/backend/revisions/index.ts（首版允许无父版本）",
+    "modules/waibu-editorial/tests/author-input.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/author-input.test.ts",
+      "exit_code": 0,
+      "evidence": "7 项通过：非法 MIME、超限、扩展名、空文件、手稿成版、重复上传去重、第一人称守卫、下载鉴权与 404"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "112 项通过（模块 104 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-013",
+      "result": "PASS",
+      "note": "上传真实文字材料通过并成为新版本（标题取首行，created_by=author，作为改稿基线）；非法 MIME（image/png、application/pdf）、超大文件（>2MB）、错误扩展名、空文件分别拒绝并给出可读原因；重复素材按 content_hash 去重，返回已有版本而不是堆新行，且重复上传不受过期版本号影响；下载走私人接口，未登录 401、登录后 text/markdown 且 no-store、不存在的版本 404。第一人称亲历守卫（我实测/我花了/一次就成功）在无作者材料时拦截——生成阶段（F16）必须调用它才真正生效，已列入 F16 的完成条件。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": [
+    "F15 证据驱动提纲",
+    "F16 起草时必须调用 guardFirstPersonExperience，否则 AC-013 的预期只停留在守卫层"
+  ]
+}
