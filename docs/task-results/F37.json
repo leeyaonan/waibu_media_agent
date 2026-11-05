@@ -1,0 +1,44 @@
+{
+  "task_id": "F37",
+  "plan_revision": "0.1.0",
+  "base_commit": "ebbc88b",
+  "branch": "develop",
+  "commits": ["4471c9e", "3eaa848", "795f926"],
+  "files": [
+    "modules/waibu-editorial/backend/jobs/handlers.ts",
+    "modules/waibu-editorial/backend/jobs/advance.ts",
+    "modules/waibu-editorial/backend/jobs/stage.ts（推进钩子与 payload）",
+    "modules/waibu-editorial/backend/store/runs.ts（步骤产物）",
+    "modules/waibu-editorial/migrations/0234_waibu_steps_payload.sql",
+    "modules/waibu-editorial/server.ts（阶段装配、队列、日程）",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（POST /runs）",
+    "modules/waibu-editorial/tests/e2e-pipeline.test.ts",
+    "tools/e2e-real.sh、tools/model-stub.mjs、tools/fixtures/stories.json"
+  ],
+  "tests": [
+    {
+      "command": "tools/e2e-real.sh（真实进程：api + worker + web + 模型 stub，独立数据库 waibu_e2e）",
+      "exit_code": 0,
+      "evidence": "run 触发 → evidence/outline/draft/check 四阶段 succeeded → 稿件进 in_review → 作者改稿 201 → 批准 200 → 排版校验 200 passed → 导出 201 succeeded → 登记 201 → 最终状态 published"
+    },
+    {
+      "command": "tools/e2e-real.sh 第 8 步（同一个脚本）",
+      "exit_code": 0,
+      "evidence": "无 cookie 访问 /editorial 返回 302 跳登录并带回跳；无 cookie 访问稿件接口 401；带 cookie 访问页面 200"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "250 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-037",
+      "result": "PASS",
+      "note": "全链路在真实进程里跑通：独立数据库 waibu_e2e 从空库迁移（105 个迁移）后，起 api、worker、web 三个真实进程与 pg-boss 队列；POST /runs 触发后 worker 依次执行 evidence→outline→draft→check，四阶段全部 succeeded 且产物落库；稿件进入 in_review。随后经真实 HTTP 完成编辑闭环：作者改稿 201、批准 200、官方校验器 200 passed、导出 201 succeeded、手工登记 201，最终状态 published。真实应用内完成编辑闭环：每一步都是对运行中的 api 发请求，不是测试进程内直接调函数。权限不丢失：未登录访问页面 302 跳登录并带回跳地址、未登录访问接口 401、带会话访问页面 200。无 mock 泄漏到生产：模型 stub 是独立进程，只由 tools/e2e-real.sh 启动，生产装配里没有任何引用；生产容器 compose 不启动它。两处需要说明的边界：一是候选故事来自 fixture 文件（WAIBU_STORY_FIXTURE），真实采集属上游 AIHOT，接真实来源在 F40 验证；二是模型使用本地 stub，符合计划里“测试使用本地假模型与 fixture”的要求。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F38 并发安全与恢复回归", "F39 部署备份及回退（Docker 本地跑通 + 文档）"]
+}
