@@ -28,10 +28,13 @@
   "acceptance": [
     {
       "case_id": "AC-022",
-      "result": "PASS",
-      "note": "直接访问 API 不能绕过：无会话 401、伪造 token 401、退出登录后立刻失效；写请求无 CSRF 403。响应全部 Cache-Control: no-store。业务错误按 EditorialError 的 code/status/details 返回（409 + conflict_version + expected/current），页面不需要解析中文。公开出口不泄露：路由表扫描确认只注册 /api/admin/editorial/*，没有 /api/v1、/api/mcp、/feed、/sitemap 或 /llms.txt。页面 loader 鉴权在 F23 落地，同一个 editorialHandler 复用。"
+      "result": "NOT_RUN",
+      "note": "只完成了 API 部分。已验证：无会话 401、伪造 token 401、退出后立即失效、写请求缺 CSRF 403、错误码映射、路由表只注册 /api/admin/editorial/*。尚未完成：页面 loader 鉴权（F23 起才存在私人页面）、附件下载与发布包下载的拒绝（F34）。这三项补齐前不把 AC-022 标 PASS——按验收原文“页面、API、附件和导出均拒绝”，现在只满足四分之一。"
     }
   ],
   "blockers": [],
-  "next_steps": ["F23 稿件队列与选题页（依赖 F02+F22）", "F13 作者材料导入", "F14 工作流编排"]
+  "next_steps": [
+    "F23 稿件队列与选题页：页面 loader 复用 editorialHandler，补齐 AC-022 的页面部分",
+    "F34 发布包导出：补齐附件与导出下载的拒绝，届时统一复验 AC-022"
+  ]
 }
