@@ -1,0 +1,33 @@
+{
+  "task_id": "F36",
+  "plan_revision": "0.1.0",
+  "base_commit": "5049bab",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/schedule/index.ts",
+    "modules/waibu-editorial/server.ts（注册 waibu.daily）",
+    "modules/waibu-editorial/tests/schedule.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/schedule.test.ts",
+      "exit_code": 0,
+      "evidence": "6 项通过：HH:MM→cron（含 00:05、23:59，拒绝 8:30 与 25:00）、北京时间到点判断、未到点不建运行、到点当天唯一一次且重复触发复用同一 run_id、积压达上限不出稿、错过当天补跑一次且次日为新业务日"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "240 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-036",
+      "result": "PASS",
+      "note": "按设置时间触发：cron 由 daily_time 生成（08:30 → \"30 8 * * *\"），worker 以 Asia/Shanghai 时区注册，错过则补跑一次（missed: \"once\"）。一天一次：连续两次触发，第二次返回 already_started 且 run_id 与第一次相同，库里 scheduled 运行数仍为 1。积压暂停：待审 ≥ max_pending_reviews 时不出稿，返回 pending_reviews 与“待审已积压 N 篇（上限 M）”的可读原因。补跑边界：11-07 的 08:30 错过、23:00 才触发时当天补跑一次；11-08 正常触发是新业务日；11-07 的运行数断言为 1，不会补昨天的。测试期间还暴露了两个数据假设问题（drafts.topic_id 唯一、积压计数含 revising/checking），已在用例里按真实约束构造数据。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F35 手工发布登记", "F37 模块总装与端到端（P5 开始）"]
+}
