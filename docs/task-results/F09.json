@@ -1,0 +1,27 @@
+{
+  "task_id": "F09",
+  "plan_revision": "0.1.0",
+  "base_commit": "2ccda58",
+  "branch": "develop",
+  "commits": ["e434cc0"],
+  "files": [
+    "modules/waibu-editorial/backend/materials/adapter.ts",
+    "modules/waibu-editorial/tests/materials.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/materials.test.ts",
+      "exit_code": 0,
+      "evidence": "6 项通过：多来源合并、撤回排除、单篇读取排除撤回、版权默认引用、hash 变化可追溯、摘录限长"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-009",
+      "result": "PASS",
+      "note": "同一 story 下两家来源（story_signals.kind=editorial）合成一个素材集合，每条带 source_id 与独立快照 hash；visibility=withdrawn 与 summary-only 的条目不进入集合（测试用一条 public + 一条 withdrawn 验证只剩 1 条）。素材 hash 覆盖 article_id、url、published_at 与摘录，来源或正文变化即换 hash，旧快照不受影响。版权口径：默认 quotation（只引用摘录），只有 publications.syndicate 为真才记 public，不把“站内可读全文”当成“可转载”。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F10 证据与事实映射（依赖 F06+F09）", "F11 候选选题与可写性"]
+}

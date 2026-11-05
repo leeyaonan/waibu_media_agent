@@ -1,0 +1,27 @@
+{
+  "task_id": "F18",
+  "plan_revision": "0.1.0",
+  "base_commit": "2ccda58",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/revisions/index.ts",
+    "modules/waibu-editorial/tests/revisions.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/revisions.test.ts",
+      "exit_code": 0,
+      "evidence": "5 项通过：作者编辑推进 current、旧基准产出留分支产物、基准有效时正常推进、过期版本号被拒、段落级差异"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-018",
+      "result": "PASS",
+      "note": "作者把稿子改到 v2 之后，针对 v1 的生成任务返回时：当前指针仍是 v2、lock_version 不变、模型结果作为 parent=v1 的分支产物留档（测试断言库里有 3 个版本且能按标题找到冲突产物）。旧任务不能覆盖新稿。同请求幂等由回执层保证（F06 已验证同一请求内容只发一次）。历史可重建：版本行只插入不更新，且 content_hash 与内容一一对应。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F19 批注与定向改稿", "F20 人工批准与驳回"]
+}
