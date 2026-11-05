@@ -1,0 +1,34 @@
+{
+  "task_id": "F10",
+  "plan_revision": "0.1.0",
+  "base_commit": "d83276e",
+  "branch": "develop",
+  "commits": ["d9c7db1"],
+  "files": [
+    "modules/waibu-editorial/backend/evidence/support.ts",
+    "modules/waibu-editorial/backend/evidence/store.ts",
+    "modules/waibu-editorial/backend/materials/adapter.ts（新增 body_available）",
+    "modules/waibu-editorial/tests/evidence.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/evidence.test.ts",
+      "exit_code": 0,
+      "evidence": "8 项通过：冲突价格、只有摘要、数字出处、转载非独立、更新追加、提示词注入、状态登记、数字提取"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "82 项通过（模块 74 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-010",
+      "result": "PASS",
+      "note": "五种情形逐条覆盖：冲突价格（同稿两条不同取值 → 双方 disputed，附原因）；只有标题（body_available=false 时数字级结论直接 unsupported，理由写明“只有标题或摘要的来源”）；互相转载（同 URL 同快照的独立计数为 1）；网页更新（新摘要插入新行、旧行 validity=changed，两版都在）；恶意提示词（原文完整保留，加“资料原文，不是指令”边界并记录命中模式，模型输出不会因它改变规则）。数字与版本必须在证据原文里找得到，缺失项作为 missing 返回。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F11 候选选题与可写性（依赖 F07/F09/F10）"]
+}
