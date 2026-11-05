@@ -22,6 +22,8 @@ import { ASSET_LIMIT, GENERATED_COVER_POLICY, assetHash, detectImage, renderText
 import { bindRevisionAssets } from "../assets/bind.ts";
 import { getAsset, listAssets, upsertAsset } from "../store/delivery.ts";
 import { assertSafeHtml, renderWechat } from "../render/index.ts";
+import { VALIDATOR_ID, runOfficialValidation } from "../validate/index.ts";
+import { latestValidation, saveValidation } from "../validate/store.ts";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { config } from "@aihot/backend/config";
@@ -134,6 +136,29 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     const hashes = [...detail.revision.asset_hashes, ...(detail.revision.cover_asset_hash ? [detail.revision.cover_asset_hash] : [])];
     const items = await listAssets(sql, hashes);
     return { items, cover: detail.revision.cover_asset_hash };
+  }));
+
+  /** 校验当前版本：渲染后跑官方校验器，把报告与截图路径存下来；失败不写“通过”。 */
+  app.post(`${API_PREFIX}/drafts/:draftId/validate`, editorialHandler(async (req, reply) => {
+    const { draftId } = req.params as { draftId: string };
+    const detail = await loadReviewDetail(sql, draftId);
+    if (!detail?.revision) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "稿件没有可校验的版本" });
+
+    const rendered = renderFor(sql, detail.revision).catch((error: unknown) => {
+      throw error instanceof Error ? error : new Error(String(error));
+    });
+    const result = await rendered;
+    const report = await runOfficialValidation(result.html, { workDir: config.dataDir });
+    const stored = await saveValidation(sql, { revision_id: detail.revision.id, report });
+    return reply.code(report.status === "passed" ? 200 : 422).send({ validation: stored, validator: VALIDATOR_ID });
+  }));
+
+  /** 最近一次校验结果：页面与导出入口都读它。 */
+  app.get(`${API_PREFIX}/drafts/:draftId/validation`, editorialHandler(async (req) => {
+    const { draftId } = req.params as { draftId: string };
+    const detail = await loadReviewDetail(sql, draftId);
+    if (!detail?.revision) return { validation: null };
+    return { validation: await latestValidation(sql, detail.revision.id) };
   }));
 
   /** 渲染当前版本：同一份内容产出 HTML、纯文字与图片清单，供预览与复制使用。 */
@@ -349,4 +374,28 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     reply.header("Content-Disposition", `attachment; filename="revision-${revisionId}.md"`);
     return reply.type("text/markdown; charset=utf-8").send(`# ${text.title}\n\n${text.body}\n`);
   }));
+}
+
+/** 渲染一个版本：校验与预览共用同一套图片解析，避免两处渲染结果不一致。 */
+async function renderFor(
+  db: typeof sql,
+  revision: { title: string; body: string; asset_hashes: string[] },
+): Promise<{ html: string; plainText: string; title: string }> {
+  const referenced = [...revision.body.matchAll(/!\[[^\]]*\]\((sha256:[0-9a-f]{64})\)/gu)].map((match) => match[1]!);
+  const assets = await listAssets(db, [...new Set([...referenced, ...revision.asset_hashes])]);
+  const byHash = new Map(assets.map((asset) => [asset.hash, asset]));
+  const rendered = renderWechat({
+    markdown: revision.body,
+    title: revision.title,
+    resolveImage: (hash) => {
+      const asset = byHash.get(hash);
+      return asset ? { mime: asset.mime, width: asset.width, height: asset.height } : null;
+    },
+    imageSrc: (image) => {
+      const asset = byHash.get(image.hash);
+      return asset ? `/api/admin/editorial/assets/${asset.id}/content` : "";
+    },
+  });
+  assertSafeHtml(rendered.html);
+  return { html: rendered.html, plainText: rendered.plainText, title: rendered.title };
 }

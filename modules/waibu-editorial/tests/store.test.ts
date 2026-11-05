@@ -60,11 +60,34 @@ async function seedDraft() {
   return { run, topic, draft: inReview, revision };
 }
 
-test("空库迁移后 15 张 waibu_ 表都在", async () => {
+/** 导出前必须有通过的排版校验；测试里直接补一条，规则本身在 validate.test.ts 覆盖。 */
+async function seedPassedValidation(revisionId: string): Promise<void> {
+  const { saveValidation } = await import("../backend/validate/store.ts");
+  const { VALIDATOR_VERSION, SPEC_COMMIT } = await import("../backend/validate/index.ts");
+  await saveValidation(sql, {
+    revision_id: revisionId,
+    report: {
+      validator: "verify-article-structure",
+      version: VALIDATOR_VERSION,
+      spec_commit: SPEC_COMMIT,
+      status: "passed",
+      raw: "{}",
+      violations: [],
+      duration_ms: 1,
+      checked_at: new Date().toISOString(),
+      local: { status: "passed", note: "" },
+      official: { status: "passed", note: "" },
+      wechat_backend: { status: "unverified", note: "" },
+      exit_code: 0,
+    },
+  });
+}
+
+test("空库迁移后 16 张 waibu_ 表都在", async () => {
   const rows = await sql<{ n: number }[]>`
     select count(*)::int as n from information_schema.tables
     where table_schema = 'public' and table_name like 'waibu_%'`;
-  assert.equal(rows[0]!.n, 15);
+  assert.equal(rows[0]!.n, 16);
 });
 
 test("定时 run 按业务日期与管线版本唯一，人工 run 不受限", async () => {
@@ -181,6 +204,7 @@ test("没有有效批准时不能导出；导出成功才进入 exported", async
   );
 
   const approved = await sql.begin((tx) => approveDraft(tx, { draft_id: draft.id, revision_id: revision.id, expected_content_hash: revision.content_hash, actor: "author", expected_lock_version: draft.lock_version }, { blockingIssues: 0, invalidEvidence: 0 }));
+  await seedPassedValidation(revision.id);
   const created = await sql.begin((tx) => createExport(tx, { draft_id: draft.id, revision_id: revision.id, approval_id: approved.approval.id, path: "exports/x", validator_version: "v1" }));
   assert.equal(created.status, "queued");
   assert.equal((await getDraft(sql, draft.id))?.state, "approved", "排队中不算已导出");

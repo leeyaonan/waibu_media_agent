@@ -33,5 +33,8 @@
     "@types/turndown": "5.0.6",
     "opentype.js": "1.3.4",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "verify-article-structure": "0.2.28"
   }
 }

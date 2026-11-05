@@ -18,6 +18,8 @@ export const ERROR_STATUS = {
   asset_rejected: 400,
   asset_not_found: 404,
   asset_rights_unknown: 422,
+  validation_failed: 422,
+  validation_error: 503,
   export_failed: 500,
   idempotency_conflict: 409,
 } as const;

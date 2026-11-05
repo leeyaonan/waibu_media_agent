@@ -37,6 +37,29 @@ const PNG_1X1 = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUl
 /** 一张 2×3 的 GIF。 */
 const GIF_2X3 = Buffer.from("R0lGODlhAgADAIAAAP///wAAACH5BAEAAAAALAAAAAACAAIAAAICDAoAOw==", "base64");
 
+/** 导出前必须有通过的排版校验；测试里直接补一条，规则本身在 validate.test.ts 覆盖。 */
+async function seedPassedValidation(revisionId: string): Promise<void> {
+  const { saveValidation } = await import("../backend/validate/store.ts");
+  const { VALIDATOR_VERSION, SPEC_COMMIT } = await import("../backend/validate/index.ts");
+  await saveValidation(sql, {
+    revision_id: revisionId,
+    report: {
+      validator: "verify-article-structure",
+      version: VALIDATOR_VERSION,
+      spec_commit: SPEC_COMMIT,
+      status: "passed",
+      raw: "{}",
+      violations: [],
+      duration_ms: 1,
+      checked_at: new Date().toISOString(),
+      local: { status: "passed", note: "" },
+      official: { status: "passed", note: "" },
+      wechat_backend: { status: "unverified", note: "" },
+      exit_code: 0,
+    },
+  });
+}
+
 test("尺寸从字节里解出来，不看扩展名", () => {
   assert.deepEqual(detectImage(new Uint8Array(PNG_1X1)), { mime: "image/png", width: 1, height: 1 });
   const gif = detectImage(new Uint8Array(GIF_2X3));
@@ -153,6 +176,7 @@ test("版本引用了未知授权素材时不能导出", async () => {
     approveDraft(tx, { draft_id: draft.draftId, revision_id: bound.revision.id, expected_content_hash: bound.revision.content_hash, actor: "author", expected_lock_version: approved.lock_version }, { blockingIssues: 0, invalidEvidence: 0 }),
   );
 
+  await seedPassedValidation(bound.revision.id);
   await assert.rejects(
     () => sql.begin((tx) => createExport(tx, { draft_id: draft.draftId, revision_id: bound.revision.id, approval_id: approvedResult.approval.id, path: "exports/x.zip", validator_version: "v1" })),
     /没有明确的使用依据/u,

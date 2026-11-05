@@ -7,6 +7,7 @@ import { getDraft, getRevision, lockDraft, setDraftState } from "./drafts.ts";
 import { findActiveApproval } from "./review.ts";
 import { row, rows } from "./rows.ts";
 import { assertAssetUsable } from "../assets/index.ts";
+import { assertRevisionValidated } from "../validate/store.ts";
 
 export async function upsertAsset(
   db: Db,
@@ -63,6 +64,8 @@ export async function createExport(db: Tx, input: CreateExportInput): Promise<Ex
   if (approval.revision_id !== input.revision_id) throw new EditorialError("approval_stale", "只能导出批准的那一版");
   if (draft.approved_revision_id !== input.revision_id) throw new EditorialError("approval_stale", "当前批准版本已变化");
   if (draft.state !== "approved" && draft.state !== "exported") throw new EditorialError("conflict_state", `当前状态 ${draft.state} 不能导出`, { state: draft.state });
+  // 排版校验闸门：批准之后才该校验，没有通过的记录不能生成正式包。
+  await assertRevisionValidated(db, input.revision_id);
 
   const [created] = await db`
     insert into waibu_exports (revision_id, approval_id, manifest_hash, path, validator_version, status)

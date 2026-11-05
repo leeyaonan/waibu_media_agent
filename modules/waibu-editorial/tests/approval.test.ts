@@ -66,6 +66,29 @@ async function seedReviewable() {
   return { draftId: draft.id, revision, lockVersion: Number(fresh.lock_version) };
 }
 
+/** 导出前必须有通过的排版校验；测试里直接补一条，规则本身在 validate.test.ts 覆盖。 */
+async function seedPassedValidation(revisionId: string): Promise<void> {
+  const { saveValidation } = await import("../backend/validate/store.ts");
+  const { VALIDATOR_VERSION, SPEC_COMMIT } = await import("../backend/validate/index.ts");
+  await saveValidation(sql, {
+    revision_id: revisionId,
+    report: {
+      validator: "verify-article-structure",
+      version: VALIDATOR_VERSION,
+      spec_commit: SPEC_COMMIT,
+      status: "passed",
+      raw: "{}",
+      violations: [],
+      duration_ms: 1,
+      checked_at: new Date().toISOString(),
+      local: { status: "passed", note: "" },
+      official: { status: "passed", note: "" },
+      wechat_backend: { status: "unverified", note: "" },
+      exit_code: 0,
+    },
+  });
+}
+
 test("没有会话不能批准", async () => {
   const { draftId, revision, lockVersion } = await seedReviewable();
   const response = await post(`${API_PREFIX}/drafts/${draftId}/approvals`, { expected_revision_id: revision.id, expected_content_hash: revision.content_hash, expected_lock_version: lockVersion }, false);
