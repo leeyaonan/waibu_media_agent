@@ -11,6 +11,7 @@ export default defineModule({
       pages: [
         { path: "editorial", file: "web/board.tsx", id: "waibu-editorial-board" },
         { path: "editorial/drafts/:draftId", file: "web/review.tsx", id: "waibu-editorial-review" },
+        { path: "editorial/drafts/:draftId/preview", file: "web/preview.tsx", id: "waibu-editorial-preview" },
         { path: "editorial/runs", file: "web/runs.tsx", id: "waibu-editorial-runs" },
         { path: "editorial/settings", file: "web/settings.tsx", id: "waibu-editorial-settings" },
       ],
