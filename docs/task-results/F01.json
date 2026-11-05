@@ -1,0 +1,59 @@
+{
+  "task_id": "F01",
+  "plan_revision": "0.1.0",
+  "base_commit": "a0b286d8488b5fa2859a84be54390c88d1b84bb6",
+  "branch": "develop",
+  "commits": ["a5d18cef183637cffffd22cd2fbf3c0417bd2bb6"],
+  "files": [
+    "docs/upstream/AIHOT/import-manifest.json",
+    "docs/upstream/AIHOT/README.waibu.md",
+    "upstream-lock.json",
+    ".gitignore"
+  ],
+  "import": {
+    "source_repository": "https://github.com/KKKKhazix/AIHOT.git",
+    "source_commit": "cd424b0a513c7c8535b6f291b106a3086d6b75bf",
+    "tracked_files": 686,
+    "by_mode": { "imported": 659, "relocated": 25, "merged": 1, "excluded": 1 },
+    "changed_files_in_commit": 688,
+    "insertions": 88206
+  },
+  "tests": [
+    {
+      "command": "python3 生成导入清单并按上游 git ls-files 核对覆盖",
+      "exit_code": 0,
+      "evidence": "686 个跟踪文件全部分配去向，计数 659+25+1+1=686；清单见 docs/upstream/AIHOT/import-manifest.json"
+    },
+    {
+      "command": "git remote -v",
+      "exit_code": 0,
+      "evidence": "origin 仍为 https://github.com/leeyaonan/waibu_media_agent.git，未被上游覆盖"
+    },
+    {
+      "command": "find . -name .env -o -name '*.pem' -o -name '*.key' -o -name .DS_Store -o -name __pycache__",
+      "exit_code": 0,
+      "evidence": "无匹配，未带入私密或临时文件"
+    },
+    {
+      "command": "grep -rIlE '(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,})' --exclude-dir=.git .",
+      "exit_code": 1,
+      "evidence": "无匹配（grep 退出码 1 表示未找到，符合预期），导入内容无明文密钥"
+    },
+    {
+      "command": "find . -name AGENTS.md -not -path './.git/*'",
+      "exit_code": 0,
+      "evidence": "仅剩仓库根 AGENTS.md；上游 AGENTS.md/CLAUDE.md 已改名为 *.upstream.md，避免开发工具自动加载生效"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-001",
+      "result": "PASS",
+      "note": "origin 未变；导入基线可追溯（commit + 逐文件 SHA-256 清单）；docs/project 5 篇与 Excel 完整；无 .env/密钥；上游 .claude 排除、AGENTS/CLAUDE 改名未启用。发现并修复：首次 rsync 的 --exclude='README.md' 会按基名匹配，漏掉 assets/README.md 等 3 个文件，已改为根锚定匹配并用清单核对兜底。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": [
+    "F02 冻结共享契约；F03 建离线开发与 CI 基线（需先装 Node 24）"
+  ]
+}
