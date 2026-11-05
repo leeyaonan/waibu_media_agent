@@ -1,0 +1,33 @@
+{
+  "task_id": "F20",
+  "plan_revision": "0.1.0",
+  "base_commit": "dab5f1a",
+  "branch": "develop",
+  "commits": ["deef967"],
+  "files": [
+    "modules/waibu-editorial/backend/review/guards.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（批准/驳回/导出路由）",
+    "modules/waibu-editorial/tests/approval.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/approval.test.ts",
+      "exit_code": 0,
+      "evidence": "6 项通过：无会话 401、未解缺口 422、人工批准成功、改摘要后旧批准不能导出、驳回记原因、过期版本号不写第二条批准"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "153 项通过（模块 145 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-020",
+      "result": "PASS",
+      "note": "只有人工会话可批准：/approvals 走 editorialHandler，无会话 401 且稿件状态不变；服务端与 worker 没有批准入口，approveDraft 需要 AdminPrincipal.name 作为 actor。批准绑定 revision_id + content_hash + lock_version，记录批准人；过期版本号第二次提交返回 409，库里只有一条批准。改稿撤销批准：作者改摘要后 state 回到 checking、approved_revision_id 置空、所有批准 revoked_at 非空。正式导出不能再用旧批准：同一个 approval_id 再导出返回 409 approval_required。驳回记 reject_reason 并进入 rejected，不触碰阶段记录——驳回是作者判断，任务失败是运行结果，两者分开。守卫从库里现算：unchecked 与 unsupported/disputed 的结论、以及失效证据都会阻断批准。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F19 批注与定向改稿", "F21 来源变更与批准失效", "F23/F24 审核界面"]
+}
