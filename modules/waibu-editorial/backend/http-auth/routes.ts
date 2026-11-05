@@ -24,6 +24,11 @@ import { getAsset, listAssets, upsertAsset } from "../store/delivery.ts";
 import { assertSafeHtml, renderWechat } from "../render/index.ts";
 import { VALIDATOR_ID, runOfficialValidation } from "../validate/index.ts";
 import { latestValidation, saveValidation } from "../validate/store.ts";
+import { runExport } from "../export/run.ts";
+import { buildExportPackage } from "../export/package.ts";
+import { getExport } from "../store/delivery.ts";
+import { findActiveApproval } from "../store/review.ts";
+import { getRevision } from "../store/drafts.ts";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { config } from "@aihot/backend/config";
@@ -364,7 +369,30 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
         validator_version: "pending",
       }),
     );
-    return reply.code(202).send({ export: created, job_id: null });
+    // MVP 在 API 内同步打包；F37 总装时改成 worker 任务，接口行为不变。
+    const result = await runExport(sql, created.id);
+    const saved = await getExport(sql, created.id);
+    return reply.code(result.status === "succeeded" ? 201 : 500).send({ export: saved, job_id: null, result: { status: result.status, error: result.error } });
+  }));
+
+  /** 下载正式包：只有成功导出过才有文件，未登录读不到。 */
+  app.get(`${API_PREFIX}/exports/:exportId/download`, editorialHandler(async (req, reply) => {
+    const { exportId } = req.params as { exportId: string };
+    const row = await getExport(sql, exportId);
+    if (!row || row.status !== "succeeded" || !row.path) {
+      return sendProblem(req, reply, { status: 404, code: "not_found", detail: "没有可下载的发布包" });
+    }
+    // 批准被撤销或版本已变时，旧包不再是当前有效包：文件还在，但不再作为正式包提供下载。
+    const revision = await getRevision(sql, row.revision_id);
+    const active = revision ? await findActiveApproval(sql, revision.draft_id) : null;
+    if (!active || active.id !== row.approval_id || active.revision_id !== row.revision_id) {
+      return sendProblem(req, reply, { status: 409, code: "export_stale", detail: "这一包对应的批准已失效，请重新批准并导出" });
+    }
+    return reply
+      .header("content-type", "application/zip")
+      .header("cache-control", "private, no-store")
+      .header("content-disposition", `attachment; filename="waibu-export-${row.id.slice(0, 8)}.zip"`)
+      .send(await readFile(path.join(config.dataDir, row.path)));
   }));
 
   app.get(EDITORIAL_DOWNLOAD_PATH, editorialHandler(async (req, reply) => {
