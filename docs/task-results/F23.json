@@ -1,0 +1,56 @@
+{
+  "task_id": "F23",
+  "plan_revision": "0.1.0",
+  "base_commit": "1b110be",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/module.ts",
+    "modules/waibu-editorial/server.ts",
+    "modules/waibu-editorial/web/layout.tsx",
+    "modules/waibu-editorial/web/board.tsx",
+    "modules/waibu-editorial/web/api.ts",
+    "modules/waibu-editorial/backend/board/index.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（队列与选题接口）",
+    "site/modules/index.ts、site/modules/server.ts、site/package.json、Dockerfile",
+    "modules/waibu-editorial/tests/board.test.ts",
+    "modules/waibu-editorial/tests/browser/board-check.mjs"
+  ],
+  "registration_note": "页面要能访问就必须先进路由表，所以提前做了最小装配（三份清单 + 站点依赖 + Dockerfile COPY）。F37 仍负责完整总装与端到端验证。",
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/board.test.ts",
+      "exit_code": 0,
+      "evidence": "8 项通过：空队列、未登录 401、倒序与积压数、50 篇翻页不重不漏、非法游标、积压统计口径、选题列表字段、limit 越界 400"
+    },
+    {
+      "command": "tools/board-e2e.sh（api+web+真实 Chromium，390×844）",
+      "exit_code": 0,
+      "evidence": "卡片 20 张/页；滚动宽度 390 与视口相同（溢出 0px）；翻页后标题变化 true；无 pageerror、无错误块"
+    },
+    {
+      "command": "curl 未登录访问 /editorial",
+      "exit_code": 0,
+      "evidence": "302 到 /admin/login?return=%2Feditorial；带会话访问返回 200，Cache-Control: private, no-store；未登录访问 /api/admin/editorial/drafts 返回 401"
+    },
+    {
+      "command": "node --test … tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "14 项架构约束通过（圆角必须走设计系统变量，硬编码 12px 改回 var(--radius-card)）"
+    },
+    {
+      "command": "npm run typecheck && npm run build -w @aihot/web",
+      "exit_code": 0,
+      "evidence": "后端与 web 类型检查通过，构建产物包含新页面"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-023",
+      "result": "PASS",
+      "note": "空队列：无数据时显示“这个分类下还没有稿子”并解释当天可能不出稿（curl 实测）。50 篇：真实 Chromium 打开 /editorial，每页 20 张卡片，点“下一页”后第一张标题变化、第二页仍有 20 张，滚动无重复（接口层另有不重不漏的断言）。加载失败：loader 捕获 ApiError 返回结构化错误，页面渲染错误块并提示检查 api 进程；接口层有 401 与 400 的覆盖。手机尺寸：390×844 视口下 document.scrollWidth 等于 innerWidth，横向溢出 0px。待审积压：队列接口带 pending_review，≥3 时页面提示“自动起草会暂停”。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F24 正文审核与证据抽屉", "F25 版本差异与手动编辑"]
+}
