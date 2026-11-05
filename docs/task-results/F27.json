@@ -1,0 +1,32 @@
+{
+  "task_id": "F27",
+  "plan_revision": "0.1.0",
+  "base_commit": "519a997",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/web/review.tsx（批准/驳回/导出 action 与按钮）",
+    "modules/waibu-editorial/tests/browser/approve-export-check.mjs"
+  ],
+  "tests": [
+    {
+      "command": "tools/approve-e2e.sh（真实 Chromium，含直连导出的手工请求）",
+      "exit_code": 0,
+      "evidence": "未批准时导出按钮 0 个；带页面 CSRF 直连 POST /exports 返回 409 approval_required“没有有效批准，不能导出”；点批准成功并出现导出入口；批准后改正文，页面回到“尚未批准”且导出入口消失"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "182 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-027",
+      "result": "PASS",
+      "note": "UI 禁用与服务器门禁一致：未批准时页面根本不渲染导出按钮；绕过按钮、带上有效 CSRF 直接请求导出，服务器返回 409 approval_required（不是靠 CSRF 顺手挡掉——第一版脚本正是被 403 挡在 CSRF 上，我改成带令牌后才真正测到批准门禁）。审批后修改会取消当前已批准显示：批准后改正文保存，页面回到“尚未批准”，导出入口随之消失；服务端同时撤销批准并清空指针（F20/F25 已测）。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F26 意见提交与改稿进度", "F28 运行与费用面板", "F29 编辑策略配置页"]
+}
