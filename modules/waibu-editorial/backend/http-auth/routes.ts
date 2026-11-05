@@ -6,6 +6,8 @@ import { API_PREFIX, approveRequestSchema, exportRequestSchema, rejectRequestSch
 import { approvalGuards } from "../review/guards.ts";
 import { approveDraft, rejectDraft } from "../store/review.ts";
 import { createExport } from "../store/delivery.ts";
+import { listDrafts, listTopics, pendingReviewCount } from "../board/index.ts";
+import { listQuerySchema } from "../../contracts/api.ts";
 import { policyVersion } from "../../policy/index.ts";
 import { loadRevisionText } from "../author-input/index.ts";
 import { editorialHandler, sendProblem } from "./index.ts";
@@ -21,6 +23,20 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     // 私有接口统一 no-store，这里再确认一次，避免被上游中间件覆盖。
     reply.header("Cache-Control", "no-store");
     return { ok: true, policy_version: policyVersion(), admin: admin.name };
+  }));
+
+  /** 稿件队列：按状态过滤，游标分页；同时给出待审积压数，页面据此提示暂停自动起草。 */
+  app.get(`${API_PREFIX}/drafts`, editorialHandler(async (req) => {
+    const query = listQuerySchema.parse(req.query);
+    const state = typeof (req.query as Record<string, unknown>).state === "string" ? String((req.query as Record<string, unknown>).state) : undefined;
+    const page = await listDrafts(sql, { state, cursor: query.cursor, limit: query.limit });
+    return { ...page, pending_review: await pendingReviewCount(sql) };
+  }));
+
+  /** 候选选题。 */
+  app.get(`${API_PREFIX}/topics`, editorialHandler(async (req) => {
+    const query = listQuerySchema.parse(req.query);
+    return listTopics(sql, { cursor: query.cursor, limit: query.limit });
   }));
 
   /** 人工批准：只有带管理员会话的请求能到这里，服务端与 worker 没有这条路径。 */
