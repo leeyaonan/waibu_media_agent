@@ -1,0 +1,32 @@
+{
+  "task_id": "F16",
+  "plan_revision": "0.1.0",
+  "base_commit": "c8a1a47",
+  "branch": "develop",
+  "commits": ["25c0b57"],
+  "files": [
+    "modules/waibu-editorial/backend/drafting/index.ts",
+    "modules/waibu-editorial/tests/drafting.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/drafting.test.ts",
+      "exit_code": 0,
+      "evidence": "9 项通过：正常稿、价格漂移、版本漂移、无材料第一人称、有材料放行、超长只提示、提示词约束、模型输出校验、schema 拒绝"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "138 项通过（模块 130 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-016",
+      "result": "PASS",
+      "note": "版本与数字不变：证据写“每月 20 美元 / v3.2”，稿子改写成 25 美元或 v3.3 都会被 validateDraft 拦下并指出具体是哪个数字，判定依据是事实文本与素材原文的并集，不看模型自述。第一人称：没有作者材料时，“我实测了一周，一次就成功”直接不通过；有材料时同一句放行。F13 留下的尾也在这一步收掉了——guardFirstPersonExperience 现在真的被起草阶段调用，并且提示词里同时明确禁止（规则层与提示层双保险）。超长标题/摘要只给 warning，不阻断，因为作者可以自己压到 64/120 字内。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F17 内容自检与有限修复（依赖 F07/F10/F16）", "F19 批注与定向改稿", "F20 人工批准与驳回"]
+}
