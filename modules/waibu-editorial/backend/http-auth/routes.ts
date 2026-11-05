@@ -16,6 +16,7 @@ import { IDEMPOTENCY_HEADER } from "../../contracts/api.ts";
 import { approveDraft, rejectDraft } from "../store/review.ts";
 import { createExport } from "../store/delivery.ts";
 import { listDrafts, listTopics, pendingReviewCount } from "../board/index.ts";
+import { listRuns, resumableStages, runDetail } from "../runs/index.ts";
 import { listQuerySchema } from "../../contracts/api.ts";
 import { policyVersion } from "../../policy/index.ts";
 import { loadRevisionText } from "../author-input/index.ts";
@@ -46,6 +47,17 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
   app.get(`${API_PREFIX}/topics`, editorialHandler(async (req) => {
     const query = listQuerySchema.parse(req.query);
     return listTopics(sql, { cursor: query.cursor, limit: query.limit });
+  }));
+
+  /** 运行列表：最近若干次，带阶段完成数与 token。 */
+  app.get(`${API_PREFIX}/runs`, editorialHandler(async () => ({ items: await listRuns(sql) })));
+
+  /** 运行详情：阶段、token、费用与暂停原因；恢复只补未成功的阶段。 */
+  app.get(`${API_PREFIX}/runs/:runId`, editorialHandler(async (req, reply) => {
+    const { runId } = req.params as { runId: string };
+    const detail = await runDetail(sql, runId);
+    if (!detail) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "运行不存在" });
+    return { ...detail, resumable: resumableStages(detail.steps) };
   }));
 
   /** 审核详情：正文分段、段落引用的事实、事实对应的证据摘录、意见与批准状态。 */
