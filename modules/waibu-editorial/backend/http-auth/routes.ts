@@ -2,7 +2,10 @@
 // 其余接口由后续任务在同一前缀下追加，全部经过 editorialHandler。
 import type { FastifyInstance } from "fastify";
 import { sql } from "@aihot/backend/db";
-import { API_PREFIX } from "../../contracts/api.ts";
+import { API_PREFIX, approveRequestSchema, exportRequestSchema, rejectRequestSchema } from "../../contracts/api.ts";
+import { approvalGuards } from "../review/guards.ts";
+import { approveDraft, rejectDraft } from "../store/review.ts";
+import { createExport } from "../store/delivery.ts";
 import { policyVersion } from "../../policy/index.ts";
 import { loadRevisionText } from "../author-input/index.ts";
 import { editorialHandler, sendProblem } from "./index.ts";
@@ -18,6 +21,51 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     // 私有接口统一 no-store，这里再确认一次，避免被上游中间件覆盖。
     reply.header("Cache-Control", "no-store");
     return { ok: true, policy_version: policyVersion(), admin: admin.name };
+  }));
+
+  /** 人工批准：只有带管理员会话的请求能到这里，服务端与 worker 没有这条路径。 */
+  app.post(`${API_PREFIX}/drafts/:draftId/approvals`, editorialHandler(async (req, reply, admin) => {
+    const { draftId } = req.params as { draftId: string };
+    const body = approveRequestSchema.parse(req.body);
+    const guards = await approvalGuards(sql, draftId);
+    const { approval, draft } = await sql.begin((tx) =>
+      approveDraft(
+        tx,
+        {
+          draft_id: draftId,
+          revision_id: body.expected_revision_id,
+          expected_content_hash: body.expected_content_hash,
+          actor: admin.name,
+          expected_lock_version: body.expected_lock_version,
+        },
+        guards,
+      ),
+    );
+    return reply.code(200).send({ approval, draft });
+  }));
+
+  app.post(`${API_PREFIX}/drafts/:draftId/reject`, editorialHandler(async (req, reply, admin) => {
+    const { draftId } = req.params as { draftId: string };
+    const body = rejectRequestSchema.parse(req.body);
+    const draft = await sql.begin((tx) => rejectDraft(tx, { draft_id: draftId, expected_lock_version: body.expected_lock_version, reason: body.reason }));
+    void admin;
+    return reply.code(200).send({ draft });
+  }));
+
+  /** 导出：只对当前有效批准，失败不让稿件状态前进。 */
+  app.post(`${API_PREFIX}/drafts/:draftId/exports`, editorialHandler(async (req, reply) => {
+    const { draftId } = req.params as { draftId: string };
+    const body = exportRequestSchema.parse(req.body);
+    const created = await sql.begin((tx) =>
+      createExport(tx, {
+        draft_id: draftId,
+        revision_id: body.expected_revision_id,
+        approval_id: body.expected_approval_id,
+        path: `exports/${draftId}/${body.expected_revision_id}`,
+        validator_version: "pending",
+      }),
+    );
+    return reply.code(202).send({ export: created, job_id: null });
   }));
 
   app.get(EDITORIAL_DOWNLOAD_PATH, editorialHandler(async (req, reply) => {
