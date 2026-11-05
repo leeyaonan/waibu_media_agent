@@ -1,0 +1,38 @@
+{
+  "task_id": "F08",
+  "plan_revision": "0.1.0",
+  "base_commit": "cd2ce2c",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/sources/eligibility.ts",
+    "modules/waibu-editorial/backend/sources/first-batch.ts",
+    "modules/waibu-editorial/tests/sources.test.ts"
+  ],
+  "decisions": [
+    "复用引擎采集：不另写抓取器，信源仍在 industry/sources.json 与后台维护，模块只声明用途与准入规则。",
+    "首批信源取仓库已有示范源中的 8 个（OpenAI/DeepMind/Hugging Face/GitHub/Mistral/Simon Willison/Latent Space/The Verge），没有新增未验证的 URL——凭空加源只会造出必然失败的信源。",
+    "不接入付费 X 与公众号抓取源，首版只用公开 RSS/网页。"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/sources.test.ts",
+      "exit_code": 0,
+      "evidence": "8 项通过：停用源排除、无发布时间排除并计数、首次导入旧文不刷今天、同 URL 只一条、用途判定、标记幂等、失败源可见、首批标记返回缺失名单"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "63 项通过（模块 55 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-008",
+      "result": "PASS",
+      "note": "四类 fixture 都覆盖：过期资讯（3 天前，落在 48 小时窗外）、无发布时间、重复 URL、停用源、单源失败。无可信发布时间的内容不进入 eligibleArticles，同时 undatedArticleCount 让运营看到被挡下多少；新鲜度按 published_at 判断而不是入库时间，所以首次导入的旧文不会刷今日；同一 URL 用 distinct on 去重；停用源与只参加热度统计的源都被排除；health=failing 或 fail_count>0 的源带 last_error 出现在失败列表里。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F09 素材适配器（依赖 F08）", "F18 不可变稿件版本（可与 F09 并行）"]
+}
