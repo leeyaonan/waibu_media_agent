@@ -1,0 +1,23 @@
+{
+  "task_id": "F37",
+  "status": "IN_PROGRESS",
+  "plan_revision": "0.1.0",
+  "base_commit": "ebbc88b",
+  "branch": "develop",
+  "commits": ["4471c9e"],
+  "done": [
+    "补齐 evidence/outline/draft/check 四个生产阶段实现并在 server.ts 装配（此前生产代码里一个 handler 都没注册）",
+    "阶段产物存 waibu_steps.payload（迁移 0234），阶段之间靠产物衔接",
+    "端到端测试跑通：fixture 故事 → 证据 → 大纲 → 起草 → 自检 → 待审 → 作者改稿 → 批准 → 校验 → 导出 → 手工登记"
+  ],
+  "remaining": [
+    "在真实进程里跑（api + worker + pg-boss 队列），而不是测试内直接调 handler",
+    "浏览器内完成编辑闭环（页面 → 提交 → 看到新版本）",
+    "确认没有 mock 泄漏到生产装配路径、权限在整链路上不丢失"
+  ],
+  "tests": [
+    {"command": "node --test … modules/waibu-editorial/tests/e2e-pipeline.test.ts", "exit_code": 0, "evidence": "2 项通过：全链路（真实数据库 + 本地模型 stub）与队列装配"},
+    {"command": "node --test … 全模块与架构测试", "exit_code": 0, "evidence": "250 项通过"}
+  ],
+  "note": "AC-037 要求“真实应用内完成编辑闭环”，目前只在测试进程内验证了链路，还不能算 PASS；下一轮起真实 api/worker 进程并用浏览器走一遍。"
+}
