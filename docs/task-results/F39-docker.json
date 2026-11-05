@@ -1,0 +1,23 @@
+{
+  "task_id": "F39",
+  "kind": "docker-smoke",
+  "branch": "develop",
+  "note": "补上容器内整套跑通的证据：镜像构建成功后，用 docker compose 起 db/api/worker/web 并验证 HTTP 与排版校验。",
+  "commands": [
+    "docker compose up -d db",
+    "docker compose run --rm setup        # 105 个迁移 + 18 个信源种子",
+    "docker compose up -d --force-recreate api web worker",
+    "curl http://127.0.0.1:3000/api/health",
+    "curl http://127.0.0.1:3000/editorial",
+    "docker compose exec -T api node -e '<runOfficialValidation>'"
+  ],
+  "results": {
+    "services": ["api running", "db running", "web running", "worker running"],
+    "migrations_applied": 105,
+    "health": 200,
+    "editorial_page": 302,
+    "validation_in_container": { "status": "passed", "official": "passed", "ms": 966, "browser": "/usr/bin/chromium" }
+  },
+  "root_cause_found": "宿主机上有一个残留的本地 node 进程占用 127.0.0.1:3000，挡住 Docker 的端口映射，请求根本没进容器（表现为 502/500）。杀掉后 200/302 立刻正常。",
+  "note_2": "另有 compose 需要显式 API_HOST=0.0.0.0，否则 api 只监听容器内的 127.0.0.1，web 容器连不上。"
+}
