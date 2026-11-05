@@ -1,0 +1,32 @@
+{
+  "task_id": "F19",
+  "plan_revision": "0.1.0",
+  "base_commit": "deef967",
+  "branch": "develop",
+  "commits": ["afb92b7"],
+  "files": [
+    "modules/waibu-editorial/backend/feedback/index.ts",
+    "modules/waibu-editorial/tests/feedback.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/feedback.test.ts",
+      "exit_code": 0,
+      "evidence": "7 项通过：只改开头合规、越界改价格被指出、过期批注提示、段落切分、落实改稿、未采用不覆盖、状态区分"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "160 项通过（模块 152 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-019",
+      "result": "PASS",
+      "note": "只修改开头的意见：checkFeedbackScope 以段落为单位比对，targeted=[0] 时价格段落未变则 ok=true；一旦顺手把“每月 20 美元”改成 25，第 1 段被列为 unexpected_changes，页面能指着说越界。过期批注：block_id 索引在当前版本越界时返回 stale 与“请重新定位”，不挂到相邻段落执行。建议未采用不覆盖当前稿：没有可用修订时不调用 appendRevision，当前指针与版本数不变（测试断言）。改稿后重新自检：落实意见的新版本出口固定为 checking（状态机 revising → checking），并回填 resolution_revision_id。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F21 来源变更与批准失效", "F23 稿件队列与选题页", "F24 正文审核与证据抽屉"]
+}
