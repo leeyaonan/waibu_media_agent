@@ -4,6 +4,7 @@ import type { FastifyInstance } from "fastify";
 import { sql } from "@aihot/backend/db";
 import { API_PREFIX, approveRequestSchema, exportRequestSchema, rejectRequestSchema } from "../../contracts/api.ts";
 import { approvalGuards } from "../review/guards.ts";
+import { loadReviewDetail } from "../review/detail.ts";
 import { approveDraft, rejectDraft } from "../store/review.ts";
 import { createExport } from "../store/delivery.ts";
 import { listDrafts, listTopics, pendingReviewCount } from "../board/index.ts";
@@ -37,6 +38,14 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
   app.get(`${API_PREFIX}/topics`, editorialHandler(async (req) => {
     const query = listQuerySchema.parse(req.query);
     return listTopics(sql, { cursor: query.cursor, limit: query.limit });
+  }));
+
+  /** 审核详情：正文分段、段落引用的事实、事实对应的证据摘录、意见与批准状态。 */
+  app.get(`${API_PREFIX}/drafts/:draftId`, editorialHandler(async (req, reply) => {
+    const { draftId } = req.params as { draftId: string };
+    const detail = await loadReviewDetail(sql, draftId);
+    if (!detail) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "稿件不存在" });
+    return detail;
   }));
 
   /** 人工批准：只有带管理员会话的请求能到这里，服务端与 worker 没有这条路径。 */

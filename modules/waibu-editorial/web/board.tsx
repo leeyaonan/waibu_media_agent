@@ -1,6 +1,7 @@
 // 稿件队列：待审、改稿中、已批准三类，支持翻页；空队列、加载失败、积压超限都有明确界面。
 import type { ReactNode } from "react";
 import { Link, redirect, useLoaderData } from "react-router";
+import { beijingStamp } from "@aihot/contracts/time";
 import { ApiError, editorialGet, editorialSignedIn, loginRedirect } from "./api.ts";
 
 interface DraftItem {
@@ -91,7 +92,7 @@ export default function EditorialBoard(): ReactNode {
                   <div className="wb-meta">
                     <span className="wb-badge">{stateLabel(item.draft.state)}</span>
                     {item.blocking_issues > 0 ? <span className="wb-badge warn">{item.blocking_issues} 项待处理</span> : <span className="wb-badge ok">可批准</span>}
-                    <span>更新于 {new Date(item.draft.updated_at).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</span>
+                    <span>更新于 {beijingStamp(item.draft.updated_at)}</span>
                   </div>
                   <p className="wb-sub" style={{ margin: "8px 0 0" }}>选题角度：{item.topic.angle}</p>
                 </li>
