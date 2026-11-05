@@ -196,6 +196,14 @@ export const assetRowSchema = z.object({
   created_at: iso,
 });
 
+export const errataRowSchema = z.object({
+  id: uuid,
+  publication_id: uuid,
+  note: z.string().min(1).max(2000),
+  recorded_by: z.string().min(1).max(100),
+  created_at: iso,
+});
+
 export const exportRowSchema = z.object({
   id: uuid,
   revision_id: uuid,
@@ -234,6 +242,7 @@ export type ApprovalRow = z.infer<typeof approvalRowSchema>;
 export type AssetRow = z.infer<typeof assetRowSchema>;
 export type ExportRow = z.infer<typeof exportRowSchema>;
 export type PublicationRow = z.infer<typeof publicationRowSchema>;
+export type ErrataRow = z.infer<typeof errataRowSchema>;
 
 /**
  * 由 revision 行算出 content_hash，用于写入前自检：

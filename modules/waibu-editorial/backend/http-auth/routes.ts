@@ -25,6 +25,7 @@ import { assertSafeHtml, renderWechat } from "../render/index.ts";
 import { VALIDATOR_ID, runOfficialValidation } from "../validate/index.ts";
 import { latestValidation, saveValidation } from "../validate/store.ts";
 import { runExport } from "../export/run.ts";
+import { appendErrata, importExternalEdit, publicationHistory, registerPublication } from "../publication/index.ts";
 import { buildExportPackage } from "../export/package.ts";
 import { getExport } from "../store/delivery.ts";
 import { findActiveApproval } from "../store/review.ts";
@@ -217,6 +218,65 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     } catch {
       return sendProblem(req, reply, { status: 404, code: "not_found", detail: "素材文件缺失" });
     }
+  }));
+
+  /** 登记发布：导出不等于发布，只有作者登记才推进到 published。 */
+  app.post(`${API_PREFIX}/drafts/:draftId/publications`, editorialHandler(async (req, reply, admin) => {
+    const { draftId } = req.params as { draftId: string };
+    const body = req.body as { expected_revision_id?: string; expected_lock_version?: number; published_at?: string; url?: string };
+    if (!body?.expected_revision_id || typeof body.expected_lock_version !== "number" || !body.published_at || !body.url) {
+      return sendProblem(req, reply, { status: 400, code: "invalid_request", detail: "缺少版本、发布时间或链接" });
+    }
+    const created = await sql.begin((tx) =>
+      registerPublication(tx, {
+        draft_id: draftId,
+        revision_id: body.expected_revision_id!,
+        expected_lock_version: body.expected_lock_version!,
+        published_at: body.published_at!,
+        url: body.url!,
+        recorded_by: admin.name,
+      }),
+    );
+    return reply.code(201).send({ publication: created });
+  }));
+
+  /** 后台手改过的正文先导入成新版本：批准撤销，必须重新审核再导出。 */
+  app.post(`${API_PREFIX}/drafts/:draftId/import-external-edit`, editorialHandler(async (req, reply) => {
+    const { draftId } = req.params as { draftId: string };
+    const body = req.body as { expected_lock_version?: number; expected_revision_id?: string; title?: string; summary?: string; body?: string; policy_version?: string };
+    if (typeof body?.expected_lock_version !== "number" || !body.expected_revision_id || !body.title || !body.body) {
+      return sendProblem(req, reply, { status: 400, code: "invalid_request", detail: "缺少版本信息或正文" });
+    }
+    const saved = await sql.begin((tx) =>
+      importExternalEdit(tx, {
+        draft_id: draftId,
+        expected_lock_version: body.expected_lock_version!,
+        base_revision_id: body.expected_revision_id!,
+        title: body.title!,
+        summary: body.summary ?? "",
+        body: body.body!,
+        policy_version: body.policy_version ?? "v1",
+      }),
+    );
+    return reply.code(201).send({ ...saved, note: "已导入为新版本；批准已撤销，请重新审核并导出后再登记发布" });
+  }));
+
+  /** 发布记录与勘误：只读，按版本倒序列出。 */
+  app.get(`${API_PREFIX}/drafts/:draftId/publications`, editorialHandler(async (req) => {
+    const { draftId } = req.params as { draftId: string };
+    const revisions = await listRevisions(sql, draftId);
+    return { items: await publicationHistory(sql, revisions.map((revision) => revision.id)) };
+  }));
+
+  /** 勘误：只追加一条更正记录，不改写原登记。 */
+  app.post(`${API_PREFIX}/publications/:publicationId/errata`, editorialHandler(async (req, reply, admin) => {
+    const { publicationId } = req.params as { publicationId: string };
+    const body = req.body as { note?: string };
+    if (!body?.note || body.note.trim().length === 0) {
+      return sendProblem(req, reply, { status: 400, code: "invalid_request", detail: "勘误内容不能为空" });
+    }
+    const created = await sql.begin((tx) => appendErrata(tx, { publication_id: publicationId, note: body.note!, recorded_by: admin.name }));
+    return reply.code(201).send({ errata: created });
   }));
 
   /** 编辑策略配置：改只影响之后的运行，旧运行保留它当时的版本。 */

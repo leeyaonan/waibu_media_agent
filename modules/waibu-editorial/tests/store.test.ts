@@ -83,11 +83,11 @@ async function seedPassedValidation(revisionId: string): Promise<void> {
   });
 }
 
-test("空库迁移后 16 张 waibu_ 表都在", async () => {
+test("空库迁移后 17 张 waibu_ 表都在", async () => {
   const rows = await sql<{ n: number }[]>`
     select count(*)::int as n from information_schema.tables
     where table_schema = 'public' and table_name like 'waibu_%'`;
-  assert.equal(rows[0]!.n, 16);
+  assert.equal(rows[0]!.n, 17);
 });
 
 test("定时 run 按业务日期与管线版本唯一，人工 run 不受限", async () => {
