@@ -1,0 +1,32 @@
+{
+  "task_id": "F14",
+  "plan_revision": "0.1.0",
+  "base_commit": "d4962b2",
+  "branch": "develop",
+  "commits": ["c8a1a47"],
+  "files": [
+    "modules/waibu-editorial/backend/workflow/index.ts",
+    "modules/waibu-editorial/tests/workflow.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/workflow.test.ts",
+      "exit_code": 0,
+      "evidence": "9 项通过：全量排队、提纲成功写作失败、预算暂停续跑、在跑不重复入队、全成功、换策略换键、读库推进状态、定时 run 唯一、任务载荷"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "129 项通过（模块 121 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-014",
+      "result": "PASS",
+      "note": "提纲成功、写作失败后，恢复时 pending 只有 draft（现在该入队的），remaining 是 draft/check/revise（还没完成的全部），blocked_at=draft——不会越级把 check 排在 draft 前面。预算暂停同样从暂停处继续。正在运行的阶段不会被重复入队。判断只看阶段记录，不依赖内存状态，所以进程重启后算出来一样。run 状态由阶段结果推出：有暂停即暂停、有失败即失败、全成功才成功。定时 run 同一业务日只建一次。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F16 长文与标题摘要生成（依赖 F15，且必须调用第一人称守卫）", "F17 内容自检与有限修复"]
+}
