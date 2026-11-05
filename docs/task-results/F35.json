@@ -1,0 +1,35 @@
+{
+  "task_id": "F35",
+  "plan_revision": "0.1.0",
+  "base_commit": "63d6f9b",
+  "branch": "develop",
+  "commits": ["3644576"],
+  "files": [
+    "modules/waibu-editorial/migrations/0233_waibu_errata.sql",
+    "modules/waibu-editorial/backend/publication/index.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（登记/导入/勘误接口）",
+    "modules/waibu-editorial/contracts/entities.ts（errata schema）",
+    "modules/waibu-editorial/tests/publication.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/publication.test.ts",
+      "exit_code": 0,
+      "evidence": "8 项通过：导出后仍 exported 且登记后 published、非公众号链接 400 且状态不变、版本号过期 409、勘误逐条追加且原登记 url/时间不变、空勘误 400、后台手改导入成新版本并撤销批准（旧版本不能再登记）、缺 CSRF 403"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "248 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-035",
+      "result": "PASS",
+      "note": "仅导出仍为 exported：完成导出后断言稿件状态是 exported；调用登记接口后才变 published，这一步没有任何自动推进。无微信上传/群发调用：全仓没有调用微信任何接口，登记只是写本地记录；系统无法也不应代替作者发布。发布事实保留且可勘误：waibu_publications 记录只插入不更新，勘误写入独立的 waibu_errata 表（只追加），测试断言追加两条后原登记的 url 与 published_at 一字未变；列表接口按发布记录带出对应勘误。外部手改版本需先导入确认：POST /drafts/:id/import-external-edit 把后台手改的正文导入成新版本，批准随即撤销、状态回自检，旧版本再登记会被拒。登记只认当前批准版本与预期版本号，过期 409；链接必须是 mp.weixin.qq.com，防止把别的地址记成发布链接。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F37 模块总装与端到端闭环", "F38 并发安全与恢复回归", "F39 部署备份及回退"]
+}
