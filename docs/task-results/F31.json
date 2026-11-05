@@ -1,0 +1,39 @@
+{
+  "task_id": "F31",
+  "plan_revision": "0.1.0",
+  "base_commit": "c83cccd",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/render/index.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（渲染与素材下载）",
+    "modules/waibu-editorial/tests/render.test.ts",
+    "docs/project/07-ported-renderer.md（移植来源与差异）"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/render.test.ts",
+      "exit_code": 0,
+      "evidence": "13 项通过：标题不进正文、链接拒绝、裸 URL 保留为文字、嵌套列表/围栏代码/表格拒绝、GIF 自适应与 data-ratio、图片缺失报错、图片必须单独成段、长段落与中英混排、粗体与引用、无脚本与内部编号、纯文字一致、同输入同输出"
+    },
+    {
+      "command": "curl GET /api/admin/editorial/drafts/:id/render（真实 api 进程）",
+      "exit_code": 0,
+      "evidence": "返回 title/html/plain_text/images；html 为 section 包裹的段落，标题「队列第 5 篇」未出现在 html 中；plain_text 为「正文」"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "223 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-031",
+      "result": "PASS",
+      "note": "样本覆盖：链接（Markdown 链接与 <a> 均被拒绝并提示改成普通文字来源）、嵌套列表（明确报错）、GIF（按 data-w/data-ratio/data-type 输出，width:100% 自适应，无固定像素宽）、长段落（重复 6 遍的 60+ 字中英混排段落完整保留）、中英混排（OpenAI/GPT-5.2/tokens 与中文混排不丢字）。标题不混入复制正文：一级标题作为 title 返回，html 与 plain_text 中均不含标题（测试断言 + 真实接口验证）。纯文字内容一致：同一份 Markdown 生成，段落、小标题、列表、引用、配图占位「【配图：图】」都在，且不残留 ** 与 # 符号。HTML 无脚本和内部 claim_id：assertSafeHtml 强制检查 script/iframe/on* 事件属性与 claim_ 编号，渲染接口每次返回前都会调用；测试用三类非法输入验证会被拦下。移植合规：规则来自本机技能并被显式搬进仓库，来源、版本与差异记录在 docs/project/07-ported-renderer.md，运行时不读技能目录。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F32 复制与预览（两条复制路径 + 390/1440 不溢出）", "F33 微信结构验证"]
+}
