@@ -1,0 +1,17 @@
+{
+  "name": "@aihot/waibu-editorial",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "歪布公众号编辑工作流模块：来源证据、选题、起草、自检、审核、版本、导出",
+  "exports": {
+    "./contracts": "./contracts/index.ts",
+    "./contracts/*": "./contracts/*.ts",
+    "./module": "./module.ts",
+    "./server": "./server.ts",
+    "./web": "./web.tsx"
+  },
+  "dependencies": {
+    "zod": "4.6.6"
+  }
+}

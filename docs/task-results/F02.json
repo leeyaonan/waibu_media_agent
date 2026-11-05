@@ -1,0 +1,44 @@
+{
+  "task_id": "F02",
+  "plan_revision": "0.1.0",
+  "base_commit": "9775de9",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/package.json",
+    "modules/waibu-editorial/tsconfig.json",
+    "modules/waibu-editorial/contracts/states.ts",
+    "modules/waibu-editorial/contracts/errors.ts",
+    "modules/waibu-editorial/contracts/content.ts",
+    "modules/waibu-editorial/contracts/entities.ts",
+    "modules/waibu-editorial/contracts/api.ts",
+    "modules/waibu-editorial/contracts/jobs.ts",
+    "modules/waibu-editorial/contracts/pipeline.ts",
+    "modules/waibu-editorial/contracts/index.ts",
+    "modules/waibu-editorial/tests/contracts.standalone.test.ts",
+    "docs/project/06-contracts-v1.md"
+  ],
+  "tests": [
+    {
+      "command": "npx tsc -p modules/waibu-editorial",
+      "exit_code": 0,
+      "evidence": "模块契约类型检查通过（strict + verbatimModuleSyntax + erasableSyntaxOnly）"
+    },
+    {
+      "command": "node --test modules/waibu-editorial/tests/contracts.standalone.test.ts",
+      "exit_code": 0,
+      "evidence": "15 项通过、0 失败：状态机（人工批准、published 终态、内容变化使批准失效）、内容 hash 稳定性与敏感性、API schema（缺 expected_revision_id/content_hash、未知命令、超长正文标题）、阶段键、错误码映射"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-002",
+      "result": "PASS",
+      "note": "合法请求通过；缺 expected_content_hash、缺 expected_revision_id（非 UUID）、未知运行命令、未知稿件状态、超长正文与标题均被拒绝。枚举与 schema 是唯一真源（contracts/index.ts 统一导出），前后端与 worker 共用；稿件实体（waibu_*）与 AIHOT 采集的 article/story 类型没有共用结构，只通过 materials 适配器读取，符合‘草稿与采集 article 类型分离’。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": [
+    "F03 离线开发与 CI 基线；F04 依据本契约建表"
+  ]
+}
