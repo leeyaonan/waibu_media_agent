@@ -56,6 +56,21 @@ async function evidenceStage(context: StageContext, deps: HandlerDeps): Promise<
 
   // 取最新的一条：采集结果已按时间倒序，这里不再引入随机性。
   const story = stories[0]!;
+  const dedupeKey = `${story.external_id}:${story.content_hash.slice(0, 16)}`;
+
+  // 同一条故事已经写过：复用原来的选题与稿件，不重复建。
+  // 定时任务重跑、手动补跑都会走到这里，重复建会让同一天出现两篇一样的稿子。
+  const [existingTopic] = await db`select id from waibu_topics where dedupe_key = ${dedupeKey} limit 1`;
+  if (existingTopic) {
+    const [existingDraft] = await db`select id from waibu_drafts where topic_id = ${existingTopic.id} limit 1`;
+    if (existingDraft) {
+      return {
+        output_ref: `waibu_drafts:${existingDraft.id}`,
+        payload: { draft_id: String(existingDraft.id), topic_id: String(existingTopic.id), story_title: story.title },
+      };
+    }
+  }
+
   const evidence = await createEvidence(db, {
     source_id: story.source_name,
     article_id: story.external_id,
@@ -72,7 +87,7 @@ async function evidenceStage(context: StageContext, deps: HandlerDeps): Promise<
     angle: story.title,
     reason: "当天最新的可用故事",
     evidence_status: "sufficient",
-    dedupe_key: `${story.external_id}:${story.content_hash.slice(0, 16)}`,
+    dedupe_key: dedupeKey,
   });
 
   // 事实必须绑到证据：没有依据的句子不该进提纲。

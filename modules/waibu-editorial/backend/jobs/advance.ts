@@ -8,6 +8,7 @@ import { stageInputHash } from "../../contracts/pipeline.ts";
 import type { PipelineJob } from "../../contracts/jobs.ts";
 import type { StageResult } from "./stage.ts";
 import { enqueuePipeline } from "./queue.ts";
+import { refreshRunStatus } from "../workflow/index.ts";
 
 export interface AdvanceDeps {
   /** 阶段产物里能拿到的稿件 id。 */
@@ -16,6 +17,8 @@ export interface AdvanceDeps {
 
 export async function makeAdvancer(db: Db, deps: AdvanceDeps) {
   return async ({ job, result }: { job: PipelineJob; result: StageResult }): Promise<void> => {
+    // 每次阶段结束都按阶段结果刷新运行状态：页面看到的是真实进度，不是一直 queued。
+    await refreshRunStatus(db, job.run_id);
     const index = STAGE_ORDER.indexOf(job.stage as Stage);
     if (index < 0 || index === STAGE_ORDER.length - 1) return;
     const next = STAGE_ORDER[index + 1]!;
