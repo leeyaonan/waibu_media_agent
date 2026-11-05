@@ -18,6 +18,10 @@ import { createExport } from "../store/delivery.ts";
 import { listDrafts, listTopics, pendingReviewCount } from "../board/index.ts";
 import { listRuns, resumableStages, runDetail } from "../runs/index.ts";
 import { explainRange, loadSettings, saveSettings, settingsSchema } from "../settings/index.ts";
+import { ASSET_LIMIT, GENERATED_COVER_POLICY, assetHash, detectImage, renderTextCover, writeAssetFile } from "../assets/index.ts";
+import { bindRevisionAssets } from "../assets/bind.ts";
+import { listAssets, upsertAsset } from "../store/delivery.ts";
+import { config } from "@aihot/backend/config";
 import { listQuerySchema } from "../../contracts/api.ts";
 import { policyVersion } from "../../policy/index.ts";
 import { loadRevisionText } from "../author-input/index.ts";
@@ -59,6 +63,74 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     const detail = await runDetail(sql, runId);
     if (!detail) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "运行不存在" });
     return { ...detail, resumable: resumableStages(detail.steps) };
+  }));
+
+  /** 上传素材：字节自己解析类型与尺寸，使用依据必须显式给出。 */
+  app.post(`${API_PREFIX}/assets`, editorialHandler(async (req, reply) => {
+    const body = req.body as { filename?: string; data_base64?: string; origin?: string; rights?: string };
+    if (!body?.data_base64) return sendProblem(req, reply, { status: 400, code: "invalid_request", detail: "缺少文件内容" });
+    const bytes = Buffer.from(body.data_base64, "base64");
+    if (bytes.byteLength === 0) return sendProblem(req, reply, { status: 400, code: "invalid_request", detail: "文件是空的" });
+    if (bytes.byteLength > ASSET_LIMIT) return sendProblem(req, reply, { status: 400, code: "asset_rejected", detail: "图片超过 5MB" });
+
+    const info = detectImage(new Uint8Array(bytes));
+    const hash = assetHash(bytes);
+    const stored = await writeAssetFile(config.dataDir, bytes, hash);
+    const asset = await upsertAsset(sql, {
+      hash,
+      path: stored,
+      mime: info.mime,
+      width: info.width,
+      height: info.height,
+      // 不认识的来源一律记 unknown：宁可不让它进正式包，也不猜授权。
+      origin: (["author_upload", "source_capture", "licensed"] as string[]).includes(String(body.origin)) ? (body.origin as "author_upload") : "unknown",
+      rights: (["quotation", "public", "licensed"] as string[]).includes(String(body.rights)) ? (body.rights as "public") : "unknown",
+    });
+    return reply.code(201).send({ asset });
+  }));
+
+  /** 生成文字封面并绑成新版本；同一标题永远得到同一份封面。 */
+  app.post(`${API_PREFIX}/drafts/:draftId/cover`, editorialHandler(async (req, reply) => {
+    const { draftId } = req.params as { draftId: string };
+    const body = req.body as { expected_lock_version?: number; expected_revision_id?: string; title?: string };
+    if (typeof body?.expected_lock_version !== "number" || !body.expected_revision_id) {
+      return sendProblem(req, reply, { status: 400, code: "invalid_request", detail: "缺少版本信息，刷新后再试" });
+    }
+    const detail = await loadReviewDetail(sql, draftId);
+    if (!detail?.revision) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "稿件没有版本" });
+
+    const cover = renderTextCover({ title: body.title ?? detail.revision.title });
+    const hash = assetHash(cover.bytes);
+    const stored = await writeAssetFile(config.dataDir, cover.bytes, hash);
+    const asset = await upsertAsset(sql, {
+      hash,
+      path: stored,
+      mime: "image/svg+xml",
+      width: 1175,
+      height: 500,
+      origin: GENERATED_COVER_POLICY.origin,
+      rights: GENERATED_COVER_POLICY.rights,
+    });
+
+    const bound = await sql.begin((tx) =>
+      bindRevisionAssets(tx, {
+        draft_id: draftId,
+        expected_lock_version: body.expected_lock_version!,
+        base_revision_id: body.expected_revision_id!,
+        cover_asset_hash: asset.hash,
+      }),
+    );
+    return reply.code(201).send({ asset, revision: bound.revision, draft: bound.draft });
+  }));
+
+  /** 列出版本用到的素材与授权状态。 */
+  app.get(`${API_PREFIX}/drafts/:draftId/assets`, editorialHandler(async (req) => {
+    const { draftId } = req.params as { draftId: string };
+    const detail = await loadReviewDetail(sql, draftId);
+    if (!detail?.revision) return { items: [], cover: null };
+    const hashes = [...detail.revision.asset_hashes, ...(detail.revision.cover_asset_hash ? [detail.revision.cover_asset_hash] : [])];
+    const items = await listAssets(sql, hashes);
+    return { items, cover: detail.revision.cover_asset_hash };
   }));
 
   /** 编辑策略配置：改只影响之后的运行，旧运行保留它当时的版本。 */

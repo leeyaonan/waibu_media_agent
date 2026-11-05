@@ -16,6 +16,8 @@ export const ERROR_STATUS = {
   evidence_invalid: 409,
   budget_paused: 429,
   asset_rejected: 400,
+  asset_not_found: 404,
+  asset_rights_unknown: 422,
   export_failed: 500,
   idempotency_conflict: 409,
 } as const;

@@ -3,9 +3,10 @@ import type { Db, Tx } from "@aihot/backend/db";
 import { assetRowSchema, exportRowSchema, publicationRowSchema, type AssetRow, type ExportRow, type PublicationRow } from "../../contracts/entities.ts";
 import { EditorialError, versionConflict } from "../../contracts/errors.ts";
 import { canTransition } from "../../contracts/states.ts";
-import { getDraft, lockDraft, setDraftState } from "./drafts.ts";
+import { getDraft, getRevision, lockDraft, setDraftState } from "./drafts.ts";
 import { findActiveApproval } from "./review.ts";
 import { row, rows } from "./rows.ts";
+import { assertAssetUsable } from "../assets/index.ts";
 
 export async function upsertAsset(
   db: Db,
@@ -43,6 +44,18 @@ export interface CreateExportInput {
  * manifest_hash 在渲染完成后由导出任务回填，这里先记为占位失败时也不会出现“可下载”的包。
  */
 export async function createExport(db: Tx, input: CreateExportInput): Promise<ExportRow> {
+  // 素材授权闸门：使用依据不明的图不能进正式包（封面与配图都算）。
+  const revision = await getRevision(db, input.revision_id);
+  const referenced = [...(revision?.asset_hashes ?? []), ...(revision?.cover_asset_hash ? [revision.cover_asset_hash] : [])];
+  if (referenced.length > 0) {
+    const assets = await listAssets(db, referenced);
+    const known = new Set(assets.map((asset) => asset.hash));
+    for (const hash of referenced) {
+      if (!known.has(hash)) throw new EditorialError("asset_not_found", `版本引用的素材不存在：${hash.slice(0, 15)}`);
+    }
+    for (const asset of assets) assertAssetUsable(asset);
+  }
+
   const draft = await lockDraft(db, input.draft_id);
   const approval = await findActiveApproval(db, input.draft_id);
   if (!approval) throw new EditorialError("approval_required", "没有有效批准，不能导出");
