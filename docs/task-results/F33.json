@@ -1,0 +1,49 @@
+{
+  "task_id": "F33",
+  "plan_revision": "0.1.0",
+  "base_commit": "dc9df90",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/validate/index.ts",
+    "modules/waibu-editorial/backend/validate/store.ts",
+    "modules/waibu-editorial/migrations/0230_waibu_validations.sql",
+    "modules/waibu-editorial/migrations/0231_waibu_validations_revision_idx.sql",
+    "modules/waibu-editorial/backend/store/delivery.ts（导出闸门）",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（校验接口）",
+    "modules/waibu-editorial/tests/validate.test.ts",
+    "docs/project/08-wechat-validation.md",
+    ".env.example（浏览器路径）"
+  ],
+  "locked_tooling": {
+    "package": "verify-article-structure@0.2.28",
+    "spec_repo_commit": "6bc3ea1ac079cccd88824715c879eb637f1ab076",
+    "note": "验收时现查官方文档与包版本并锁定；docs/project/08-wechat-validation.md 记录选择理由与判定口径"
+  },
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/validate.test.ts（真实 Chromium）",
+      "exit_code": 0,
+      "evidence": "6 项通过：合规稿 passed、违规结构 failed 且给出 width 规则名、修复后重跑 passed 且 0 违规、校验器起不来记 validator_error、无记录/未通过/故障三种情况导出全被拒"
+    },
+    {
+      "command": "node --test … 全模块与架构测试（含 PUPPETEER_EXECUTABLE_PATH）",
+      "exit_code": 0,
+      "evidence": "229 项通过、0 跳过"
+    },
+    {
+      "command": "同上一组但不设浏览器路径",
+      "exit_code": 0,
+      "evidence": "3 项按 skip 处理而非通过，说明未配置浏览器不会被误判成合规"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-033",
+      "result": "PASS",
+      "note": "故意违规与修复：用 margin-left:600px 的段落制造官方 width 规则违规，第一次判定 failed 并给出规则名 width；去掉该属性后重跑同一套规则判定 passed、0 违规。为什么不用 width:900px：实测官方校验器对裸 width:900px 判合规，只对“会随屏幕变化出问题”的排版（过大左边距、固定列宽表格、图片 opacity:0、超宽 pre、line-height 叠字）报警，这个发现写进了 docs/project/08-wechat-validation.md。校验失败阻止正式导出：createExport 在批准校验之后增加 assertRevisionValidated，三种情况分别拦截——没有记录（validation_failed）、判定未通过（validation_failed）、校验器故障（validator_error 503），都有断言。本地/官方工具/后台状态分开：报告固定含 local（我们自己的结构自检）、official（官方校验器）、wechat_backend（恒为 unverified，只能由作者粘贴后目视确认）三块，测试断言后台状态必须为 unverified，杜绝“后台已验证”的假声明。报告与违规原文逐条入库（waibu_validations），可复核。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F36 每日调度", "F34 版本绑定发布包（用通过校验的版本生成正式包）"]
+}
