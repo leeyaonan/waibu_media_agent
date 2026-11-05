@@ -1,0 +1,32 @@
+{
+  "task_id": "F12",
+  "plan_revision": "0.1.0",
+  "base_commit": "6d941b5",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/topics/dedupe.ts",
+    "modules/waibu-editorial/tests/dedupe.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/dedupe.test.ts",
+      "exit_code": 0,
+      "evidence": "6 项通过：首次创建、同键 skip、新进展 follow_up、换角度仍可创建、查询辅助、最新时间取值"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "97 项通过（模块 89 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-012",
+      "result": "PASS",
+      "note": "重复调度：同 dedupe_key 第二次返回 skip 并带已有选题 id，不会重复起草（数据库另有 dedupe_key 唯一约束兜底）。新进展：同一 story 的素材发布时间晚于该 story 最后一次选题时间时返回 follow_up，并说明“上次写到 X，之后又有新发布 Y”——不会被旧事件一刀切排除。换角度：素材不比上次新、但角度不同时仍返回 create，证明去重键是“事件+角度”而不是只看事件。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F22 私人路由与权限", "F13 作者材料导入", "F14 工作流编排（依赖 F12 已完成）"]
+}

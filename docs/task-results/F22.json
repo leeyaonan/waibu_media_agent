@@ -1,0 +1,37 @@
+{
+  "task_id": "F22",
+  "plan_revision": "0.1.0",
+  "base_commit": "3c6c909",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/http-auth/index.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts",
+    "modules/waibu-editorial/tests/http-auth.test.ts"
+  ],
+  "decisions": [
+    "没有直接复用 apps/api 的 adminHandler：模块不能依赖应用层（架构约束要求 packages 不依赖 apps）。改为用 @aihot/backend/admin/auth 的 sessionPrincipal + CSRF 原语实现同样的守卫，会话与后台是同一条，不存在第二套登录。",
+    "错误响应自己拼，形状与 apps/api 的 sendProblem 一致（type/title/status/detail/code/requestId），页面只按 code 判断。"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/http-auth.test.ts",
+      "exit_code": 0,
+      "evidence": "8 项通过：未登录 401、有效会话 200、伪造会话拒绝、缺 CSRF 403、带 CSRF 通过、业务错误码映射、只注册私人前缀、退出后失效"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "105 项通过（模块 97 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-022",
+      "result": "PASS",
+      "note": "直接访问 API 不能绕过：无会话 401、伪造 token 401、退出登录后立刻失效；写请求无 CSRF 403。响应全部 Cache-Control: no-store。业务错误按 EditorialError 的 code/status/details 返回（409 + conflict_version + expected/current），页面不需要解析中文。公开出口不泄露：路由表扫描确认只注册 /api/admin/editorial/*，没有 /api/v1、/api/mcp、/feed、/sitemap 或 /llms.txt。页面 loader 鉴权在 F23 落地，同一个 editorialHandler 复用。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F23 稿件队列与选题页（依赖 F02+F22）", "F13 作者材料导入", "F14 工作流编排"]
+}
