@@ -1,0 +1,69 @@
+{
+  "task_id": "F03",
+  "plan_revision": "0.1.0",
+  "base_commit": "ec5ca9f",
+  "branch": "develop",
+  "commits": ["9bd4999", "7f04189"],
+  "commit_note": "F03 的文件与 F04 落在同一批提交里（.nvmrc、.env.example、CI、dev-setup.md 在 9bd4999），没有单独拆出 F03 提交；文件内容与验证记录见下。",
+  "files": [
+    ".nvmrc",
+    ".env.example",
+    ".github/workflows/check.yml",
+    "modules/tsconfig.json",
+    "docs/project/dev-setup.md",
+    "README.md"
+  ],
+  "environment": {
+    "node": "24.22.2（上游要求 >=24.22.1；本机原 22.19.0 不满足，已装 24.22.2 并在 .nvmrc 固定）",
+    "postgres": "postgres:17-alpine（Docker，本机 5432）",
+    "pg_client": "libpq 18.6 的 pg_dump/pg_restore（备份恢复测试需要；keg-only，已写进 dev-setup.md）",
+    "browsers": "playwright chromium 1228 + webkit 2311",
+    "github": "本机直连 github.com 被阻断，仓库级配置 127.0.0.1:7897 代理；CI 在 GitHub 上跑，不受影响"
+  },
+  "tests": [
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "evidence": "引擎 + apps + tests + modules（含新 contracts）全部通过，4.5s"
+    },
+    {
+      "command": "DATABASE_URL=…/waibu_ci npm test",
+      "exit_code": 0,
+      "evidence": "1066 项通过、0 失败（含引擎架构约束测试与新增模块测试）"
+    },
+    {
+      "command": "npm run build -w @aihot/web",
+      "exit_code": 0,
+      "evidence": "Web 产物构建成功（build/server/index.js 742 kB）"
+    },
+    {
+      "command": "node --test --test-concurrency=1 apps/web/tests/*.test.ts",
+      "exit_code": 0,
+      "evidence": "61 项通过、0 失败（需要 chromium 与 webkit 两个引擎）"
+    },
+    {
+      "command": "tools/smoke-local.sh（起 api+web，COLLECT_ENABLED=false、MODEL_CALLS_ENABLED=false）",
+      "exit_code": 0,
+      "evidence": "scripts/smoke.ts 全部页面与出口通过；scripts/mcp-check.ts 契约检查通过；全程无外部模型调用"
+    },
+    {
+      "command": "node scripts/check-migrations.ts --base HEAD",
+      "exit_code": 0,
+      "evidence": "迁移历史未改写，新增迁移符合在线规则"
+    },
+    {
+      "command": "DATABASE_URL=…/waibu_dev_check node scripts/migrate.ts（空库执行两次）",
+      "exit_code": 0,
+      "evidence": "首次 applied 96，第二次 database is up to date，可重复启动"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-003",
+      "result": "PASS",
+      "note": "typecheck、后端测试、Web 构建与 Web 测试全部通过；冒烟在采集与模型开关均关闭的情况下跑通。零付费请求的依据：tests/setup.ts 把全部付费供应商指向本地 stub，测试进程内才打开开关；.env.example 里 COLLECT_ENABLED 与 MODEL_CALLS_ENABLED 显式写 false，init-env 直接复制该模板，因此新环境默认不采集、不调模型；smoke 运行时这两个变量显式设为 false。测试库名统一 waibu_ci/_test，tests/setup.ts 对非 _test/_ci 库直接拒绝。干净机器的步骤与依赖缺口（Node 24、PostgreSQL 17、pg_dump、两个浏览器引擎）已写入 docs/project/dev-setup.md。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F05 模块队列与恢复基础", "F06 模型调用及费用记录", "F07 账号规则与提示词版本"]
+}
