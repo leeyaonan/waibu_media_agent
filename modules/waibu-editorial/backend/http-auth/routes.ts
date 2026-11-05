@@ -20,7 +20,10 @@ import { listRuns, resumableStages, runDetail } from "../runs/index.ts";
 import { explainRange, loadSettings, saveSettings, settingsSchema } from "../settings/index.ts";
 import { ASSET_LIMIT, GENERATED_COVER_POLICY, assetHash, detectImage, renderTextCover, writeAssetFile } from "../assets/index.ts";
 import { bindRevisionAssets } from "../assets/bind.ts";
-import { listAssets, upsertAsset } from "../store/delivery.ts";
+import { getAsset, listAssets, upsertAsset } from "../store/delivery.ts";
+import { assertSafeHtml, renderWechat } from "../render/index.ts";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { config } from "@aihot/backend/config";
 import { listQuerySchema } from "../../contracts/api.ts";
 import { policyVersion } from "../../policy/index.ts";
@@ -131,6 +134,59 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     const hashes = [...detail.revision.asset_hashes, ...(detail.revision.cover_asset_hash ? [detail.revision.cover_asset_hash] : [])];
     const items = await listAssets(sql, hashes);
     return { items, cover: detail.revision.cover_asset_hash };
+  }));
+
+  /** 渲染当前版本：同一份内容产出 HTML、纯文字与图片清单，供预览与复制使用。 */
+  app.get(`${API_PREFIX}/drafts/:draftId/render`, editorialHandler(async (req, reply) => {
+    const { draftId } = req.params as { draftId: string };
+    const detail = await loadReviewDetail(sql, draftId);
+    if (!detail?.revision) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "稿件没有可渲染的版本" });
+
+    const referenced = [...detail.revision.body.matchAll(/!\[[^\]]*\]\((sha256:[0-9a-f]{64})\)/gu)].map((match) => match[1]!);
+    const assets = await listAssets(sql, [...new Set([...referenced, ...detail.revision.asset_hashes])]);
+    const byHash = new Map(assets.map((asset) => [asset.hash, asset]));
+
+    const rendered = renderWechat({
+      markdown: detail.revision.body,
+      title: detail.revision.title,
+      resolveImage: (hash) => {
+        const asset = byHash.get(hash);
+        if (!asset) return null;
+        return { mime: asset.mime, width: asset.width, height: asset.height };
+      },
+      imageSrc: (image) => {
+        const asset = byHash.get(image.hash);
+        return asset ? `/api/admin/editorial/assets/${asset.id}/content` : "";
+      },
+    });
+    assertSafeHtml(rendered.html);
+    return {
+      title: rendered.title,
+      html: rendered.html,
+      plain_text: rendered.plainText,
+      images: rendered.images.map((image) => {
+        const asset = byHash.get(image.hash);
+        return { hash: image.hash, alt: image.alt, width: image.width, height: image.height, mime: image.mime, url: asset ? `/api/admin/editorial/assets/${asset.id}/content` : null };
+      }),
+    };
+  }));
+
+  /** 素材原文件：只有带管理员会话的请求能读，内容不进任何缓存。 */
+  app.get(`${API_PREFIX}/assets/:assetId/content`, editorialHandler(async (req, reply) => {
+    const { assetId } = req.params as { assetId: string };
+    const asset = await getAsset(sql, assetId);
+    if (!asset) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "素材不存在" });
+    const absolute = path.join(config.dataDir, asset.path);
+    try {
+      const bytes = await readFile(absolute);
+      return reply
+        .header("content-type", asset.mime)
+        .header("cache-control", "private, no-store")
+        .header("x-content-type-options", "nosniff")
+        .send(bytes);
+    } catch {
+      return sendProblem(req, reply, { status: 404, code: "not_found", detail: "素材文件缺失" });
+    }
   }));
 
   /** 编辑策略配置：改只影响之后的运行，旧运行保留它当时的版本。 */

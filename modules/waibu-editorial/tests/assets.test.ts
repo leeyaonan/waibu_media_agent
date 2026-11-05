@@ -149,12 +149,12 @@ test("版本引用了未知授权素材时不能导出", async () => {
   );
   await sql`update waibu_drafts set state = 'in_review' where id = ${draft.draftId}`;
   const approved = (await getDraft(sql, draft.draftId))!;
-  const approval = await sql.begin((tx) =>
+  const approvedResult = await sql.begin((tx) =>
     approveDraft(tx, { draft_id: draft.draftId, revision_id: bound.revision.id, expected_content_hash: bound.revision.content_hash, actor: "author", expected_lock_version: approved.lock_version }, { blockingIssues: 0, invalidEvidence: 0 }),
   );
 
   await assert.rejects(
-    () => sql.begin((tx) => createExport(tx, { draft_id: draft.draftId, revision_id: bound.revision.id, approval_id: approval.id, path: "exports/x.zip", validator_version: "v1" })),
+    () => sql.begin((tx) => createExport(tx, { draft_id: draft.draftId, revision_id: bound.revision.id, approval_id: approvedResult.approval.id, path: "exports/x.zip", validator_version: "v1" })),
     /没有明确的使用依据/u,
   );
 });
