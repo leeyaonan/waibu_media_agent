@@ -17,6 +17,7 @@ import { approveDraft, rejectDraft } from "../store/review.ts";
 import { createExport } from "../store/delivery.ts";
 import { listDrafts, listTopics, pendingReviewCount } from "../board/index.ts";
 import { listRuns, resumableStages, runDetail } from "../runs/index.ts";
+import { explainRange, loadSettings, saveSettings, settingsSchema } from "../settings/index.ts";
 import { listQuerySchema } from "../../contracts/api.ts";
 import { policyVersion } from "../../policy/index.ts";
 import { loadRevisionText } from "../author-input/index.ts";
@@ -58,6 +59,19 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     const detail = await runDetail(sql, runId);
     if (!detail) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "运行不存在" });
     return { ...detail, resumable: resumableStages(detail.steps) };
+  }));
+
+  /** 编辑策略配置：改只影响之后的运行，旧运行保留它当时的版本。 */
+  app.get(`${API_PREFIX}/settings`, editorialHandler(async () => ({ ...(await loadSettings(sql)), limits: explainRange() })));
+
+  app.put(`${API_PREFIX}/settings`, editorialHandler(async (req, reply, admin) => {
+    const body = req.body as { settings?: unknown; expected_version?: number };
+    if (typeof body?.expected_version !== "number") {
+      return sendProblem(req, reply, { status: 400, code: "invalid_request", detail: "缺少 expected_version，刷新后再保存" });
+    }
+    const expected = body.expected_version;
+    const saved = await sql.begin((tx) => saveSettings(tx, { settings: body.settings, actor: admin.name, expected_version: expected }));
+    return reply.code(200).send(saved);
   }));
 
   /** 审核详情：正文分段、段落引用的事实、事实对应的证据摘录、意见与批准状态。 */

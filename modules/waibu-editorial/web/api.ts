@@ -47,13 +47,15 @@ export interface ApiPost extends ApiRequest {
   body: unknown;
   /** 写请求必须带会话里的 CSRF 令牌。 */
   csrf: string;
+  /** 默认 POST；配置保存是 PUT。 */
+  method?: "POST" | "PUT" | "DELETE";
 }
 
 /** 写请求：把浏览器带来的 cookie 与页面上的 CSRF 一起转给 api。 */
-export async function editorialPost<T>({ request, path, body, csrf }: ApiPost): Promise<T> {
+export async function editorialPost<T>({ request, path, body, csrf, method = "POST" }: ApiPost): Promise<T> {
   const cookie = request.headers.get("cookie") ?? "";
   const response = await fetch(`${API_BASE()}/api/admin/editorial${path}`, {
-    method: "POST",
+    method,
     headers: { accept: "application/json", "content-type": "application/json", cookie, "x-csrf-token": csrf },
     body: JSON.stringify(body),
   });

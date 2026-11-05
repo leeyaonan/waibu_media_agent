@@ -21,3 +21,11 @@ export function row<S extends z.ZodType>(schema: S, value: unknown): z.infer<S> 
 export function rows<S extends z.ZodType>(schema: S, values: readonly unknown[]): z.infer<S>[] {
   return values.map((value) => row(schema, value));
 }
+
+/**
+ * jsonb 列读回来可能是对象，也可能是字符串（取决于参数化方式）。
+ * 统一成对象再用，避免把字符串丢给 zod 才在运行时炸。
+ */
+export function jsonValue<T>(value: unknown): T {
+  return typeof value === "string" ? (JSON.parse(value) as T) : (value as T);
+}

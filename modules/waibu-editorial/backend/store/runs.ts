@@ -11,13 +11,15 @@ export interface CreateRunInput {
   mode: "scheduled" | "manual";
   pipeline_version: string;
   input_hash: string;
+  /** 创建时生效的配置版本；不填表示没记录。 */
+  config_version?: number | null;
 }
 
 /** 新建运行。定时运行按业务日期与管线版本唯一，重复触发会撞唯一约束并抛错。 */
 export async function createRun(db: Db, input: CreateRunInput): Promise<RunRow> {
   const [created] = await db`
-    insert into waibu_runs (business_date, mode, pipeline_version, input_hash)
-    values (${input.business_date}, ${input.mode}, ${input.pipeline_version}, ${input.input_hash})
+    insert into waibu_runs (business_date, mode, pipeline_version, input_hash, config_version)
+    values (${input.business_date}, ${input.mode}, ${input.pipeline_version}, ${input.input_hash}, ${input.config_version ?? null})
     returning *, business_date::text as business_date`;
   return row(runRowSchema, created);
 }

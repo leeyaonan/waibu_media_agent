@@ -12,10 +12,7 @@ export interface IdempotencyRecord<T> {
   response: T;
 }
 
-/** jsonb 读回来可能是对象也可能是字符串，统一成对象再用。 */
-function asObject<T>(value: unknown): T {
-  return typeof value === "string" ? (JSON.parse(value) as T) : (value as T);
-}
+import { jsonValue as asObject } from "../store/rows.ts";
 
 export function requestHashOf(body: unknown): string {
   return inputHash(body);
