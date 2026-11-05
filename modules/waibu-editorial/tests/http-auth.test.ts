@@ -92,7 +92,9 @@ test("模块只注册私人前缀，不碰公开出口", () => {
   const routes = app.printRoutes({ commonPrefix: false });
   assert.match(routes, /api\/admin\/editorial\/health/u);
   for (const open of ["/api/v1", "/api/mcp", "/feed", "/sitemap", "/llms.txt"]) {
-    assert.ok(!routes.includes(open), `模块不应注册公开出口：${open}`);
+    // 按路径段匹配：/feedback 不能被误判成 /feed
+    const segment = new RegExp(`(^|[\\s/])${open.replace(/[/.]/gu, "\\$&")}([/\\s]|$)`, "u");
+    assert.ok(!segment.test(routes), `模块不应注册公开出口：${open}`);
   }
 });
 

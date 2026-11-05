@@ -60,11 +60,11 @@ async function seedDraft() {
   return { run, topic, draft: inReview, revision };
 }
 
-test("空库迁移后 13 张 waibu_ 表都在", async () => {
+test("空库迁移后 14 张 waibu_ 表都在", async () => {
   const rows = await sql<{ n: number }[]>`
     select count(*)::int as n from information_schema.tables
     where table_schema = 'public' and table_name like 'waibu_%'`;
-  assert.equal(rows[0]!.n, 13);
+  assert.equal(rows[0]!.n, 14);
 });
 
 test("定时 run 按业务日期与管线版本唯一，人工 run 不受限", async () => {

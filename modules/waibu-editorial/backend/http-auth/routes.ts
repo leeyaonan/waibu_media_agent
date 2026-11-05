@@ -8,6 +8,11 @@ import { loadReviewDetail } from "../review/detail.ts";
 import { applyAuthorEdit, diffRevisions } from "../revisions/index.ts";
 import { saveRevisionRequestSchema } from "../../contracts/api.ts";
 import { listRevisions } from "../store/drafts.ts";
+import { createFeedback } from "../store/review.ts";
+import { feedbackRequestSchema } from "../../contracts/api.ts";
+import { EditorialError } from "../../contracts/errors.ts";
+import { requestHashOf, withIdempotency } from "../idempotency/index.ts";
+import { IDEMPOTENCY_HEADER } from "../../contracts/api.ts";
 import { approveDraft, rejectDraft } from "../store/review.ts";
 import { createExport } from "../store/delivery.ts";
 import { listDrafts, listTopics, pendingReviewCount } from "../board/index.ts";
@@ -92,6 +97,50 @@ export function registerEditorialRoutes(app: FastifyInstance): void {
     );
     void admin;
     return reply.code(201).send({ revision: saved.revision, draft: saved.draft, requeued: true, job_id: null });
+  }));
+
+  /**
+   * 提交意见并请求改稿。带 Idempotency-Key 时重复提交只产生一份意见；
+   * 稿件进入 revising，改稿失败也不会丢掉作者写的意见。
+   */
+  app.post(`${API_PREFIX}/drafts/:draftId/feedback`, editorialHandler(async (req, reply, admin) => {
+    const { draftId } = req.params as { draftId: string };
+    const body = feedbackRequestSchema.parse(req.body);
+    const key = req.headers[IDEMPOTENCY_HEADER] ? String(req.headers[IDEMPOTENCY_HEADER]) : null;
+
+    const result = await withIdempotency({
+      db: sql,
+      key,
+      actor: admin.name,
+      path: `/drafts/${draftId}/feedback`,
+      requestHash: requestHashOf({ draftId, ...body }),
+      run: async () => {
+        // 意见必须针对当前版本；旧版本上提的意见会让改稿结果错位。
+        const current = await sql`select current_revision_id, state from waibu_drafts where id = ${draftId}`;
+        if (current.length === 0) throw new EditorialError("not_found", "稿件不存在");
+        if (String(current[0]!.current_revision_id) !== body.expected_revision_id) {
+          throw new EditorialError("conflict_version", "这条意见针对的版本已经不是当前版本，请刷新后重新定位");
+        }
+
+        const feedback = await sql.begin(async (tx) => {
+          const created = await createFeedback(tx, {
+            draft_id: draftId,
+            revision_id: body.expected_revision_id,
+            block_id: body.block_id ?? null,
+            text: body.text,
+          });
+          // 只有待审稿会因为提意见进入改稿；其他状态保持原样，意见照样保存。
+          if (String(current[0]!.state) === "in_review") {
+            await tx`update waibu_drafts set state = 'revising', lock_version = lock_version + 1, updated_at = now() where id = ${draftId}`;
+          }
+          return created;
+        });
+        return { feedback, job_id: null };
+      },
+    });
+
+    // 重复提交返回 200，第一次返回 202：页面据此区分“又点了一次”。
+    return reply.code(result.replayed ? 200 : 202).send({ ...result.response, replayed: result.replayed });
   }));
 
   /** 人工批准：只有带管理员会话的请求能到这里，服务端与 worker 没有这条路径。 */

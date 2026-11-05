@@ -92,6 +92,19 @@ export async function action({ request, params }: { request: Request; params: Re
       });
       return { ok: true, message: "已驳回，原因已记录。" };
     }
+    if (intent === "feedback") {
+      await editorialPost({
+        request,
+        path: `${draftPath}/feedback`,
+        csrf,
+        body: {
+          text: String(form.get("text") ?? ""),
+          block_id: String(form.get("block_id") ?? "") || undefined,
+          expected_revision_id: String(form.get("expected_revision_id") ?? ""),
+        },
+      });
+      return { ok: true, message: "意见已提交，稿件进入改稿中。" };
+    }
     if (intent === "export") {
       await editorialPost({
         request,
@@ -315,6 +328,18 @@ export default function EditorialReview(): ReactNode {
           )}
 
           <h2 style={{ marginTop: 18 }}>意见（{detail.feedback.length}）</h2>
+          <Form method="post">
+            <input type="hidden" name="intent" value="feedback" />
+            <input type="hidden" name="csrf" value={data.csrf} />
+            <input type="hidden" name="expected_revision_id" value={detail.revision.id} />
+            <div className="wb-field">
+              <label htmlFor="wb-feedback">对这一版提意见</label>
+              <textarea id="wb-feedback" name="text" required maxLength={4000} style={{ minHeight: 80 }} placeholder="例如：开头再直接一点" />
+            </div>
+            <div className="wb-actions">
+              <button type="submit" disabled={busy}>提交意见并请求改稿</button>
+            </div>
+          </Form>
           {detail.feedback.length === 0 ? (
             <p className="wb-sub">还没有意见。</p>
           ) : (
@@ -322,6 +347,7 @@ export default function EditorialReview(): ReactNode {
               {detail.feedback.map((item) => (
                 <li key={item.id}>
                   第 {item.block_id ?? "全篇"} 段：{item.text}
+                  <span className="wb-sub"> {item.resolution_revision_id ? "· 已落实" : "· 待处理"}</span>
                 </li>
               ))}
             </ul>
