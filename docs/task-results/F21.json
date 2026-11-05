@@ -1,0 +1,32 @@
+{
+  "task_id": "F21",
+  "plan_revision": "0.1.0",
+  "base_commit": "7e3a025",
+  "branch": "develop",
+  "commits": ["2cb3c6f"],
+  "files": [
+    "modules/waibu-editorial/backend/invalidation/index.ts",
+    "modules/waibu-editorial/tests/invalidation.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/invalidation.test.ts",
+      "exit_code": 0,
+      "evidence": "5 项通过：撤回后批准失效转 on_hold、导出前检查不通过、已发布稿只留勘误、无关稿件不受影响、重复撤回幂等"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "165 项通过（模块 157 + 架构 8）"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-021",
+      "result": "PASS",
+      "note": "批准后来源撤回：证据标 withdrawn，引用它的 claim 从 supported 降为 unsupported，稿件转 on_hold，approved_revision_id 清空，所有批准 revoked_at 非空，导出前的 validateEvidenceForExport 返回 invalid=1。已发布稿：状态保持 published，发布记录不删，只产出 errata（含 draft/revision/原因）——发布是既成事实，不能被后端改写。无关稿件不受影响（另一篇仍是 approved）。重复撤回幂等：第二次 evidence_withdrawn=0、approvals_revoked=0。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F23 稿件队列与选题页（P3 开始）", "F24 正文审核与证据抽屉"]
+}
