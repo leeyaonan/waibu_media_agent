@@ -1,0 +1,44 @@
+{
+  "task_id": "F29",
+  "plan_revision": "0.1.0",
+  "base_commit": "ec0a3c5",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/migrations/0228_waibu_settings.sql",
+    "modules/waibu-editorial/migrations/0229_waibu_runs_config_version.sql",
+    "modules/waibu-editorial/backend/settings/index.ts",
+    "modules/waibu-editorial/backend/store/runs.ts（config_version）",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（GET/PUT /settings）",
+    "modules/waibu-editorial/web/settings.tsx",
+    "modules/waibu-editorial/web/api.ts（支持 PUT）",
+    "modules/waibu-editorial/tests/settings.test.ts",
+    "modules/waibu-editorial/tests/browser/settings-check.mjs"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/settings.test.ts",
+      "exit_code": 0,
+      "evidence": "6 项通过：默认版本 1、保存升版并记修改人、旧运行保留旧 config_version 而新运行用新版本、5 组非法值全部 400 且库不变、版本冲突 409、边界值 1/5 与 00:00/23:59 通过"
+    },
+    {
+      "command": "tools/settings-e2e.sh（真实 Chromium 390×844）",
+      "exit_code": 0,
+      "evidence": "保存后提示“已保存，配置版本 3”，刷新后版本 2→3，横向溢出 0px"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "201 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-029",
+      "result": "PASS",
+      "note": "修改每天数量后新 run 生效：配置带版本号，保存升一版；测试里先用版本 N 创建运行，改配置后再用 N+1 创建运行，断言两行 config_version 分别是 N 与 N+1。旧 run 输出不被重写：版本只插入 config_version 一列，历史运行与稿件内容不做任何更新；改配置只影响之后创建的运行。无效 cron/范围拒绝：每天稿数 1–5、候选 1–10、积压 1–10、修复轮数 0–3、时间必须 HH:MM（00:00 与 23:59 可用，8:30、25:00 被拒），5 组非法输入全部 400 且库中版本与内容不变；版本号过期保存返回 409 并提示刷新。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F30 封面与素材清单（P4）", "F31 公众号 HTML 渲染"]
+}
