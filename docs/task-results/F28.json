@@ -1,0 +1,41 @@
+{
+  "task_id": "F28",
+  "plan_revision": "0.1.0",
+  "base_commit": "5d1e65b",
+  "branch": "develop",
+  "commits": ["3d96070"],
+  "files": [
+    "modules/waibu-editorial/backend/runs/index.ts",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（运行列表与详情）",
+    "modules/waibu-editorial/web/runs.tsx",
+    "modules/waibu-editorial/module.ts（注册运行页）",
+    "modules/waibu-editorial/tests/runs.test.ts",
+    "modules/waibu-editorial/tests/browser/runs-check.mjs"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/runs.test.ts",
+      "exit_code": 0,
+      "evidence": "7 项通过：暂停原因与所在阶段、恢复只补未成功阶段、usage 缺失时费用 null、有价格时才合计、字段白名单不泄露、列表倒序与完成数、未登录 401"
+    },
+    {
+      "command": "tools/runs-e2e.sh（真实 Chromium 390×844）",
+      "exit_code": 0,
+      "evidence": "面板显示“预算或调用次数用完（budget_paused），已停在「outline」阶段”；阶段表两行；合计 0 tokens · 费用 unknown；提示“恢复只会补 outline、draft、check、revise（已成功的不会重跑）”；横向溢出 0px"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "195 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-028",
+      "result": "PASS",
+      "note": "三种状态的文案与行为：预算用尽显示“预算或调用次数用完（budget_paused），已停在「stage」阶段”；usage 缺失时 total_tokens 为 0（不编造），费用为 null 显示 unknown；供应商没给价格（有回执但 cost 为空）时合计同样为 unknown，绝不显示 0 元。恢复行为：resumableStages 只返回未成功的阶段，页面明确写“已成功的不会重跑”，测试断言 evidence 成功后不再出现在恢复列表里。不暴露密钥与整段 prompt：详情接口只输出白名单字段（stage/status/attempt/时间/错误码/purpose/model/prompt 版本/token/费用），测试逐字段校验，并断言响应中不含 sk-、Bearer、api_key 等痕迹，且不返回 request 字段。注：面板展示恢复范围与原因，点击恢复真正入队要等 F37 装配队列后接入。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F29 编辑策略配置页", "F30 封面与素材清单（P4）"]
+}
