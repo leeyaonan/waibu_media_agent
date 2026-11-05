@@ -1,0 +1,35 @@
+{
+  "task_id": "F07",
+  "plan_revision": "0.1.0",
+  "base_commit": "87bf2a7",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/policy/v1.ts",
+    "modules/waibu-editorial/policy/index.ts",
+    "modules/waibu-editorial/prompts/common/system.ts",
+    "modules/waibu-editorial/prompts/common/index.ts",
+    "modules/waibu-editorial/tests/policy.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/policy.test.ts",
+      "exit_code": 0,
+      "evidence": "5 项通过：版本与来源、改规则换指纹与阶段键、规则真的进提示词、不依赖本机路径、旧版本保留原 policy_version"
+    },
+    {
+      "command": "npx tsc -p modules/waibu-editorial",
+      "exit_code": 0,
+      "evidence": "严格类型检查通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-007",
+      "result": "PASS",
+      "note": "规则带日期版本号（2026-11-05.1）；改规则会改变 policyHash 与 stageInputHash，同样的输入按新工作处理；旧 revision 存的是它生成时的 policy_version，切到新规则后旧行不变（数据库验证：写入 2026-11-05.0 后当前规则是 2026-11-05.1，旧行仍为 0 版）。规则与提示词全部在仓库内，扫描 policy/ 与 prompts/ 确认没有 ~/.agents、~/.codex、~/.claude 或 /Users/ 之类的本机路径依赖；禁写清单与文字规则在测试里逐条确认真的出现在提示词中，而不是只放在配置里。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F08 首批信源与来源管理", "F09 素材适配器（依赖 F08）"]
+}
