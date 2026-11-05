@@ -169,6 +169,7 @@ test("未知状态与枚举外的值一律拒绝", () => {
     current_revision_id: null,
     approved_revision_id: null,
     lock_version: 1,
+    reject_reason: null,
     created_at: "2026-11-05T08:30:00+08:00",
     updated_at: "2026-11-05T08:30:00+08:00",
   };

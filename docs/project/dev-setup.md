@@ -9,6 +9,7 @@
 | Node.js | 24.22.2（见 `.nvmrc`） | 引擎要求 `>=24.22.1`；低版本 `npm ci` 会警告且部分语法跑不了 |
 | npm | 随 Node 自带 | 仓库用 npm workspaces，不使用 pnpm |
 | PostgreSQL | 17（`postgres:17-alpine`） | 测试库名必须以 `_test` 或 `_ci` 结尾 |
+| PostgreSQL 客户端 | 17 的 `pg_dump` / `pg_restore` | 备份恢复测试要调用它们；macOS 用 `brew install libpq`（keg-only，需把 `$(brew --prefix libpq)/bin` 加进 PATH），Ubuntu 用 `postgresql-client-17` |
 
 ```bash
 # 用 nvm 的机器

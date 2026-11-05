@@ -1,0 +1,56 @@
+{
+  "task_id": "F04",
+  "plan_revision": "0.1.0",
+  "base_commit": "ec5ca9f",
+  "branch": "develop",
+  "commits": ["9bd4999"],
+  "files": [
+    "modules/waibu-editorial/migrations/0200_waibu_runs.sql ~ 0225_waibu_drafts_reject_reason.sql（26 个）",
+    "modules/waibu-editorial/backend/store/runs.ts",
+    "modules/waibu-editorial/backend/store/drafts.ts",
+    "modules/waibu-editorial/backend/store/review.ts",
+    "modules/waibu-editorial/backend/store/delivery.ts",
+    "modules/waibu-editorial/backend/store/rows.ts",
+    "modules/waibu-editorial/backend/store/index.ts",
+    "modules/waibu-editorial/tests/store.test.ts",
+    "modules/waibu-editorial/contracts/entities.ts（article_id 改 text、新增 reject_reason）"
+  ],
+  "migrations": {
+    "count": 26,
+    "tables": 13,
+    "indexes": 12,
+    "numbering": "0200-0225，与引擎迁移（0001-0123）同一账本，按完整文件名排序执行",
+    "online_safety": "node scripts/check-migrations.ts --base HEAD 通过：每个文件一条语句，索引 CONCURRENTLY IF NOT EXISTS"
+  },
+  "tests": [
+    {
+      "command": "node scripts/check-migrations.ts --base HEAD",
+      "exit_code": 0,
+      "evidence": "migration history and online safety checked"
+    },
+    {
+      "command": "DATABASE_URL=…/waibu_dev_check node scripts/migrate.ts（空库，两次）",
+      "exit_code": 0,
+      "evidence": "首次 applied 96 个迁移（引擎 71 + 模块 25），13 张 waibu_ 表；再次执行输出 database is up to date"
+    },
+    {
+      "command": "psql 直接验证约束（重复定时 run / 重复阶段 / 第二个有效批准）",
+      "exit_code": 0,
+      "evidence": "三条 INSERT 分别被 waibu_runs_scheduled_unique、waibu_steps_run_id_stage_input_hash_attempt_key、waibu_approvals_active_unique 拒绝；人工 run 可重复建"
+    },
+    {
+      "command": "node --test modules/waibu-editorial/tests/store.test.ts（database 测试套件）",
+      "exit_code": 0,
+      "evidence": "8 项通过：13 张表存在、定时 run 唯一、阶段重复投递只留一条、版本只追加且版本号不符拒绝、批准绑定 hash 与状态、内容变化自动撤销批准、无批准不能导出、导出成功才 exported、证据快照只增不改"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-004",
+      "result": "PASS",
+      "note": "空库迁移与重复启动均通过；同 business_date+pipeline_version 的定时 run、同阶段同输入同尝试、同稿件第二个有效批准都被唯一约束拦截；revision 只插入不更新，旧版本内容不可变。实施中发现并修复一个真实缺陷：appendRevision 原先先插版本再比较 lock_version，冲突时会留下孤儿版本（测试断言 3≠2 暴露），改为事务内先锁定稿件再写版本，并把多语句写函数收紧为 Tx 签名由类型系统强制。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F05 模块队列与恢复基础", "F06 模型调用及费用记录"]
+}

@@ -13,7 +13,7 @@ import {
   type RevisionRow,
   type TopicRow,
 } from "../../contracts/entities.ts";
-import { contentHash, normalizeRevisionContent, type RevisionContent } from "../../contracts/content.ts";
+import { CONTENT_HASH_VERSION, contentHash, normalizeRevisionContent, type RevisionContent } from "../../contracts/content.ts";
 import { stateAfterContentChange, type ArticleState } from "../../contracts/states.ts";
 import { versionConflict } from "../../contracts/errors.ts";
 import { row, rows } from "./rows.ts";
@@ -42,11 +42,11 @@ export async function findTopicByDedupeKey(db: Db, dedupeKey: string): Promise<T
 
 export async function createEvidence(
   db: Db,
-  input: { source_id: string; article_id: string; url: string; published_at: string | null; excerpt: string; hash: string; rights: "quotation" | "public" | "licensed" | "unknown" },
+  input: { source_id: string; article_id: string; url: string; published_at: string | null; fetched_at?: Date; excerpt: string; hash: string; rights: "quotation" | "public" | "licensed" | "unknown" },
 ): Promise<EvidenceRow> {
   const [created] = await db`
-    insert into waibu_evidence (source_id, article_id, url, published_at, excerpt, hash, rights)
-    values (${input.source_id}, ${input.article_id}, ${input.url}, ${input.published_at}, ${input.excerpt}, ${input.hash}, ${input.rights})
+    insert into waibu_evidence (source_id, article_id, url, published_at, fetched_at, excerpt, hash, rights)
+    values (${input.source_id}, ${input.article_id}, ${input.url}, ${input.published_at}, ${input.fetched_at ?? new Date()}, ${input.excerpt}, ${input.hash}, ${input.rights})
     returning *`;
   return row(evidenceRowSchema, created);
 }
@@ -66,13 +66,20 @@ export async function setEvidenceValidity(db: Db, ids: readonly string[], validi
 
 export async function createClaim(
   db: Db,
-  input: { topic_id: string; text: string; kind: "factual" | "inference" | "author_opinion"; evidence_ids: string[] },
+  input: { topic_id: string; text: string; kind: "factual" | "inference" | "author_opinion"; evidence_ids: string[]; status?: "unchecked" | "supported" | "disputed" | "unsupported" },
 ): Promise<ClaimRow> {
   const [created] = await db`
-    insert into waibu_claims (topic_id, text, kind, evidence_ids)
-    values (${input.topic_id}, ${input.text}, ${input.kind}, ${input.evidence_ids}::uuid[])
+    insert into waibu_claims (topic_id, text, kind, evidence_ids, status)
+    values (${input.topic_id}, ${input.text}, ${input.kind}, ${input.evidence_ids}::uuid[], ${input.status ?? "unchecked"})
     returning *`;
   return row(claimRowSchema, created);
+}
+
+/** 核查结论：状态与核查时间一起写，页面据此区分“没查”和“查过且有问题”。 */
+export async function markClaimChecked(db: Db, claimId: string, status: "supported" | "disputed" | "unsupported"): Promise<ClaimRow> {
+  const [updated] = await db`
+    update waibu_claims set status = ${status}, checked_at = now() where id = ${claimId} returning *`;
+  return row(claimRowSchema, updated);
 }
 
 export async function listClaims(db: Db, topicId: string): Promise<ClaimRow[]> {
@@ -121,11 +128,11 @@ export async function appendRevision(db: Tx, input: AppendRevisionInput): Promis
   const content = normalizeRevisionContent(input.content);
   const hash = contentHash(content);
   const [created] = await db`
-    insert into waibu_revisions (draft_id, parent_id, title, summary, body, cover_asset_hash, captions, asset_hashes, content_hash, policy_version, created_by)
+    insert into waibu_revisions (draft_id, parent_id, title, summary, body, cover_asset_hash, captions, asset_hashes, content_hash, content_hash_version, policy_version, created_by)
     values (
       ${input.draft_id}, ${input.parent_id}, ${content.title}, ${content.summary}, ${content.body},
       ${content.cover_asset_hash}, ${db.json(content.captions as never)}, ${content.asset_hashes},
-      ${hash}, ${input.policy_version}, ${input.created_by}
+      ${hash}, ${CONTENT_HASH_VERSION}, ${input.policy_version}, ${input.created_by}
     )
     returning *`;
   const revision = row(revisionRowSchema, created);

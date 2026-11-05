@@ -111,8 +111,8 @@ export async function recordPublication(db: Tx, input: RecordPublicationInput): 
     throw new EditorialError("conflict_state", `当前状态 ${draft.state} 不能登记发布`, { state: draft.state });
   }
   const [created] = await db`
-    insert into waibu_publications (revision_id, published_at, url, recorded_by)
-    values (${input.revision_id}, ${input.published_at}, ${input.url}, ${input.recorded_by})
+    insert into waibu_publications (revision_id, channel, published_at, url, recorded_by)
+    values (${input.revision_id}, 'wechat_mp', ${input.published_at}, ${input.url}, ${input.recorded_by})
     returning *`;
   await setDraftState(db, { draft_id: input.draft_id, expected_lock_version: input.expected_lock_version, next_state: "published" });
   return row(publicationRowSchema, created);
