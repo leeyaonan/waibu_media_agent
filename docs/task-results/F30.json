@@ -1,0 +1,36 @@
+{
+  "task_id": "F30",
+  "plan_revision": "0.1.0",
+  "base_commit": "c9d1bfd",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/assets/index.ts",
+    "modules/waibu-editorial/backend/assets/bind.ts",
+    "modules/waibu-editorial/backend/store/delivery.ts（导出闸门）",
+    "modules/waibu-editorial/contracts/errors.ts（素材错误码）",
+    "modules/waibu-editorial/backend/http-auth/routes.ts（上传/封面/清单接口）",
+    "modules/waibu-editorial/tests/assets.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/assets.test.ts",
+      "exit_code": 0,
+      "evidence": "9 项通过：PNG/GIF/JPEG 尺寸从字节解析、非图片拒绝、封面 1175×500 且同标题同 hash、标题注入被转义、上传未知依据记 unknown、生成封面形成新版本、未知授权素材阻止导出"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "210 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-030",
+      "result": "PASS",
+      "note": "不生成假产品截图：只提供确定性文字封面生成器，同一标题永远得到同一份字节（hash 相同），SVG 页脚固定写“设计图（非产品截图）”；没有证书生成任何模拟产品界面图的通路。未知使用依据的素材不进正式包：上传时 origin/rights 不在白名单内一律记 unknown；导出闸门 createExport 会读出该版本引用的封面与全部配图，任一 rights=unknown 即抛 asset_rights_unknown（422），测试用真实 approve→export 流程断言被拒。素材绑定形成新版本，所以批准与导出永远指向同一份确定性内容。待补：素材清单页面展示与图注编辑入口在 F32 预览页接入。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F31 公众号 HTML 渲染", "F32 复制与预览"]
+}
