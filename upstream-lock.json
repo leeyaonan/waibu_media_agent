@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/KKKKhazix/AIHOT.git",
+  "branch_at_inspection": "main",
+  "commit": "cd424b0a513c7c8535b6f291b106a3086d6b75bf",
+  "subject": "fix: pressing an open menu's trigger closes it in Safari",
+  "inspected_on": "2026-11-05",
+  "timezone": "Asia/Shanghai",
+  "local_reference": "../references/AIHOT",
+  "checkout_mode": "shallow-clone",
+  "integration_status": "reference-only",
+  "planned_integration": "pinned-source-import-with-editorial-module",
+  "code_license": "MIT",
+  "notice": "AIHOT name and logo are excluded; retain upstream LICENSE, NOTICE and third-party licenses when importing source."
+}

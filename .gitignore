@@ -1,0 +1,27 @@
+# Secrets and local state
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+.DS_Store
+.data/
+data/
+output/
+backups/
+*.log
+
+# Runtime/build products
+node_modules/
+build/
+dist/
+coverage/
+.react-router/
+test-results/
+playwright-report/
+.venv/
+__pycache__/
+
+# Local reference checkouts must not become product files
+references/
