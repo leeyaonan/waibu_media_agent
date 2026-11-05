@@ -17,6 +17,8 @@ export interface StageResult {
   output_ref: string;
   /** 模型回执 id；确定性阶段为 null。 */
   receipt_id?: number | null;
+  /** 阶段产物本体（大纲、草稿等），供下一阶段读取；写进步骤的 payload。 */
+  payload?: unknown;
 }
 
 export interface StageContext {
@@ -105,7 +107,7 @@ export async function executePipelineJob(job: PipelineJob): Promise<PipelineOutc
   try {
     await sql.begin(async (tx) => {
       const result = await handler({ db: tx, job });
-      await finishStep(tx, step.id, "succeeded", { output_ref: result.output_ref, receipt_id: result.receipt_id ?? null });
+      await finishStep(tx, step.id, "succeeded", { output_ref: result.output_ref, receipt_id: result.receipt_id ?? null, payload: result.payload });
     });
     return "executed";
   } catch (error) {

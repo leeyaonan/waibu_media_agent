@@ -73,17 +73,28 @@ export async function findSucceededStep(db: Db, runId: string, stage: Stage, inp
   return found ? row(stepRowSchema, found) : null;
 }
 
+/** 读一次运行里某个阶段最近一次成功的产物。 */
+export async function latestStepPayload(db: Db, runId: string, stage: string): Promise<unknown | null> {
+  const [row] = await db`
+    select payload from waibu_steps
+    where run_id = ${runId} and stage = ${stage} and status = 'succeeded'
+    order by created_at desc, id desc limit 1`;
+  if (!row) return null;
+  return typeof row.payload === "string" ? JSON.parse(row.payload) : (row.payload ?? null);
+}
+
 export async function finishStep(
   db: Db,
   stepId: string,
   status: TaskState,
-  patch: { receipt_id?: number | null; output_ref?: string | null; error_code?: string | null } = {},
+  patch: { receipt_id?: number | null; output_ref?: string | null; error_code?: string | null; payload?: unknown } = {},
 ): Promise<StepRow> {
   const [updated] = await db`
     update waibu_steps set
       status = ${status},
       receipt_id = coalesce(${patch.receipt_id ?? null}, receipt_id),
       output_ref = coalesce(${patch.output_ref ?? null}, output_ref),
+      payload = coalesce(${patch.payload === undefined ? null : JSON.stringify(patch.payload)}::jsonb, payload),
       error_code = ${patch.error_code ?? null},
       updated_at = now()
     where id = ${stepId}
