@@ -1,0 +1,39 @@
+{
+  "task_id": "F32",
+  "plan_revision": "0.1.0",
+  "base_commit": "0775d8a",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/web/preview.tsx",
+    "modules/waibu-editorial/module.ts（注册预览页）",
+    "apps/web/app/lib/clipboard.ts（新增 copyRich，带选中复制回退）",
+    "modules/waibu-editorial/tests/browser/preview-check.mjs"
+  ],
+  "tests": [
+    {
+      "command": "tools/preview-e2e.sh（真实 Chromium，两个视口各跑一遍两条复制路径）",
+      "exit_code": 0,
+      "evidence": "390px 与 1440px：横向溢出 0；正文、来源文字都在；标题不在正文；两条路径正文一致、图片数 1、图片地址相同、链接数 0；图片渲染宽度 292px（390 视口）与 546px（1440 视口），随视口自适应；纯文字剪贴板含正文"
+    },
+    {
+      "command": "node --test … tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "14 项通过（含“剪贴板只经 lib/clipboard.ts 写入”）：页面的 navigator.clipboard 调用已移除，改走引擎封装"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "223 项通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-032",
+      "result": "PASS",
+      "note": "两个视口各实测一遍：390px 与 1440px 的 document.scrollWidth 均等于视口宽（溢出 0），正文容器内图片宽度分别渲染为 292px 与 546px，没有固定像素宽度。两条复制路径：路径一是按钮通过 Clipboard API 写入 text/html，路径二是选中正文后浏览器原生复制；两条都从同一个 DOM 节点取内容。校验结果：正文文字完全一致（逐字比对）、图片数都是 1、图片地址相同、都没有 <a> 链接，纯文字剪贴板与正文一致。说明：两条路径的 HTML 字节数不同（1749 vs 6041），因为原生复制会由浏览器重新序列化并附加它自己的包装；因此验收按“实际内容一致”比对正文/图片/链接，而不是字节相等——这一点在检查脚本里有注释写清。此外页面里原先直接调用 navigator.clipboard，被架构约束拦下，已改为使用引擎的 lib/clipboard.ts（新增 copyRich，保留内嵌浏览器回退）。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F33 微信结构验证（官方校验器 + 阻止未通过导出）", "F36 每日调度"]
+}
