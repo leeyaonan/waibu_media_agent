@@ -119,7 +119,7 @@ test("落库前中断：业务写入回滚，步骤记失败原因，重投后�
   assert.equal(afterCrash[0]!.n, 0, "崩溃时未提交的业务写入必须回滚");
   const failed = await sql`select status, error_code from waibu_steps where run_id = ${job.run_id} and status = 'failed'`;
   assert.equal(failed.length, 1);
-  assert.equal(failed[0]!.error_code, "Error", "失败原因要落库，便于排障");
+  assert.equal(failed[0]!.error_code, "other", "失败原因要落库，便于排障（非模型故障归为 other）");
 
   assert.equal(await executePipelineJob(withDraft), "executed");
   const afterRetry = await sql`select count(*)::int as n from waibu_revisions where draft_id = ${draft.id}`;

@@ -10,6 +10,7 @@ import type { Stage } from "../../contracts/pipeline.ts";
 import { stepRowSchema, type StepRow } from "../../contracts/entities.ts";
 import { finishStep, findSucceededStep } from "../store/runs.ts";
 import { row } from "../store/rows.ts";
+import { classifyModelFailure } from "../model/client.ts";
 
 export interface StageResult {
   /** 产物引用（表名 + 主键），写进步骤记录，便于审计和复用。 */
@@ -36,7 +37,7 @@ export function registeredStages(): Stage[] {
   return [...handlers.keys()];
 }
 
-export type PipelineOutcome = "reused" | "executed";
+export type PipelineOutcome = "reused" | "executed" | "paused";
 
 type Claim =
   | { kind: "reused"; step: StepRow }
@@ -75,8 +76,8 @@ async function claim(job: PipelineJob): Promise<Claim> {
     if (running) return { kind: "busy" };
 
     const [claimed] = await tx`
-      insert into waibu_steps (run_id, stage, input_hash, attempt, status)
-      select ${job.run_id}, ${job.stage}, ${job.input_hash}, coalesce(max(attempt), 0) + 1, 'running'
+      insert into waibu_steps (run_id, stage, input_hash, attempt, status, draft_id)
+      select ${job.run_id}, ${job.stage}, ${job.input_hash}, coalesce(max(attempt), 0) + 1, 'running', ${job.draft_id}
       from waibu_steps
       where run_id = ${job.run_id} and stage = ${job.stage} and input_hash = ${job.input_hash}
       returning *`;
@@ -109,7 +110,12 @@ export async function executePipelineJob(job: PipelineJob): Promise<PipelineOutc
     return "executed";
   } catch (error) {
     // 事务已回滚，业务写入不会留下半成品；这里单独记失败原因，供页面和排障读。
-    const code = error instanceof Error ? error.name.slice(0, 64) : "unknown";
+    const code = classifyModelFailure(error);
+    // 额度耗尽不是故障：标成暂停等人工放行，不要让队列反复重试继续烧钱。
+    if (code === "budget_paused") {
+      await finishStep(sql, step.id, "paused_budget", { error_code: code }).catch(() => undefined);
+      return "paused";
+    }
     await finishStep(sql, step.id, "failed", { error_code: code }).catch(() => undefined);
     throw error;
   }

@@ -1,0 +1,42 @@
+{
+  "task_id": "F06",
+  "plan_revision": "0.1.0",
+  "base_commit": "fd5ee1d",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/model/client.ts",
+    "modules/waibu-editorial/backend/model/budget.ts",
+    "modules/waibu-editorial/backend/model/config.ts",
+    "modules/waibu-editorial/backend/jobs/stage.ts（失败分类、暂停语义、步骤关联稿件）",
+    "modules/waibu-editorial/contracts/pipeline.ts（单稿调用次数上限）",
+    "modules/waibu-editorial/migrations/0226_waibu_steps_draft_id.sql",
+    "modules/waibu-editorial/tests/model.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/model.test.ts",
+      "exit_code": 0,
+      "evidence": "8 项通过：回执复用（同输入只发一次）、非法 JSON→output_unusable 不重试、429→provider_outage 可重试、超时→outcome_unknown 可重试、额度耗尽不发请求、阶段暂停、费用 unknown、页面不调用模型"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "evidence": "50 项通过（模块 42 + 架构约束 8）"
+    },
+    {
+      "command": "npx tsc -p modules/waibu-editorial",
+      "exit_code": 0,
+      "evidence": "严格类型检查通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-006",
+      "result": "PASS",
+      "note": "四种故障都用本地 stub 真跑过：超时（AbortSignal）→ outcome_unknown、回执状态 unknown、可重试；非法 JSON → output_unusable、不重试；429 → provider_outage、可重试；额度耗尽 → 不进网络、抛 budget_paused，阶段状态写 paused_budget。回执复用：同一请求内容第二次调用直接复用已保存响应，stub 只被命中一次。未知费用不填零：draftUsage 在有调用缺价格时把合计置为 null，formatCost 输出 unknown。页面访问不触发模型：由源码扫描测试守住（apps/web/app 下不允许出现 providers/llm、chatJson、backend/model）。实施中修正两点：模型参数传的是预设键而不是模型名；测试用例必须用不同请求内容，否则会被回执当成同一次请求复用（这本身验证了回执键的语义）。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F07 账号规则与提示词版本", "F08 首批信源与来源管理"]
+}

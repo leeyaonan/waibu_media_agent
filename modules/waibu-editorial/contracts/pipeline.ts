@@ -61,6 +61,8 @@ export const BUDGET_DEFAULTS = {
   max_attempts_per_stage: 3,
   /** 单篇稿件的输出 token 上限（各阶段合计）。 */
   max_output_tokens_per_draft: 60_000,
+  /** 单篇稿件的模型调用次数上限（各阶段合计）。 */
+  max_calls_per_draft: 20,
   /** 单次运行的最长时长，分钟。 */
   max_run_minutes: 45,
 } as const;
