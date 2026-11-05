@@ -1,0 +1,39 @@
+{
+  "task_id": "F05",
+  "plan_revision": "0.1.0",
+  "base_commit": "569fae6",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/backend/jobs/queue.ts",
+    "modules/waibu-editorial/backend/jobs/stage.ts",
+    "modules/waibu-editorial/backend/jobs/index.ts",
+    "modules/waibu-editorial/tests/jobs.test.ts"
+  ],
+  "tests": [
+    {
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test modules/waibu-editorial/tests/jobs.test.ts",
+      "exit_code": 0,
+      "evidence": "5 项通过：重复投递只执行一次、并发投递只有一方执行、落库前中断后重投只产生一份结果、崩溃留下的 running 记录会被标为中断、未实现的阶段明确报错"
+    },
+    {
+      "command": "node --test … modules/waibu-editorial/tests/*.test.ts",
+      "exit_code": 0,
+      "evidence": "模块全部 28 项测试通过（契约 15 + 数据层 8 + 队列 5）"
+    },
+    {
+      "command": "npx tsc -p modules/waibu-editorial",
+      "exit_code": 0,
+      "evidence": "严格类型检查通过"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-005",
+      "result": "PASS",
+      "note": "重复投递只提交一份有效产物：同一 (run, stage, input_hash) 成功后直接复用，不再调用阶段实现。进程重启续跑：业务写入与步骤结账在同一事务，崩溃时整体回滚，重投后只留一份结果；遗留的 running 记录超过执行窗口后被标为 attempt_interrupted。错误原因可查：失败步骤写 error_code。实施中发现并修复一个真实并发缺陷：原实现按 max(attempt)+1 计算新尝试，两个 worker 并发时会各自算出不同 attempt 并都执行，同一份输入被跑两遍；改为认领在事务内用 pg_advisory_xact_lock 串行化，先查成功、再清理僵尸 running、最后插入，抢不到的一方抛错让队列退避重试，绝不谎报成功。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F06 模型调用及费用记录", "F07 账号规则与提示词版本"]
+}
