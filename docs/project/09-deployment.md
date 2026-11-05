@@ -117,3 +117,21 @@ docker compose exec api printenv MODEL_CALLS_ENABLED COLLECT_ENABLED
 - 公众号后台的最终渲染效果无法自动验证，只能作者粘贴后目视确认
 - 镜像构建需要外网；受限网络用 `--build-arg NPM_REGISTRY=https://registry.npmmirror.com`
 - 微信结构校验的规则版本锁定在 `verify-article-structure@0.2.28`，升级需重跑校验用例
+
+## 9. 容器内冒烟（本地已验）
+
+```bash
+docker compose up -d db
+docker compose run --rm setup           # 105 个迁移
+docker compose up -d api worker web
+curl -fsS http://127.0.0.1:3000/api/health     # {"ok":true,"db":"ok"}
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/editorial   # 302
+docker compose exec -T api node -e '…runOfficialValidation…'               # passed
+```
+
+实测结果：四个服务 running，健康检查 200，`/editorial` 未登录 302，容器内官方排版校验 `passed`（Chromium 在 `/usr/bin/chromium`）。
+
+### 两个容易踩的坑
+
+1. **`API_HOST=0.0.0.0` 必须显式设置**：api 默认只监听容器内的 `127.0.0.1`，web 容器按服务名连不上。
+2. **宿主机 3000 端口不能被别的进程占用**：本地残留的 node 进程会挡住 Docker 的端口映射，表现为 502/500，但容器日志一切正常——先 `lsof -nP -i :3000` 看一眼。
