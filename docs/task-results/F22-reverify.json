@@ -1,0 +1,26 @@
+{
+  "task_id": "F22",
+  "kind": "reverify",
+  "plan_revision": "0.1.0",
+  "branch": "develop",
+  "note": "当初 AC-022 只做到 API 一层，页面、附件、导出三个出口还没实现，所以标了 NOT_RUN。F23/F31/F34 补齐后在这里复验。",
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/private-access.test.ts",
+      "exit_code": 0,
+      "evidence": "4 项通过：附件未登录 401 且登录后 200（cache-control: private, no-store）；导出包未登录 401 且响应不含服务器路径；页面/API/附件/导出四个出口全部 401；三类写请求缺 CSRF 全部 403"
+    },
+    {
+      "command": "tools/e2e-real.sh 第 8 步（真实进程）",
+      "exit_code": 0,
+      "evidence": "无 cookie 访问 /editorial 返回 302 并带回跳地址；无 cookie 访问稿件接口 401；带 cookie 页面 200"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-022",
+      "result": "PASS",
+      "note": "四个出口逐个验：页面（真实 web 进程，302 跳登录并带回跳）、API（401）、附件下载（401，登录后 200 且响应头 private, no-store）、导出包下载（401，响应里不带出服务器路径）。写请求缺 CSRF 一律 403，覆盖保存版本、提交意见、上传素材三类。当初的缺口（页面、附件、导出）在 F23/F31/F34 已实现，本次是复验而不是重新声明。"
+    }
+  ]
+}

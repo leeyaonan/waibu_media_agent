@@ -1,0 +1,41 @@
+{
+  "task_id": "F38",
+  "plan_revision": "0.1.0",
+  "base_commit": "0ce8d36",
+  "branch": "develop",
+  "commits": [],
+  "files": [
+    "modules/waibu-editorial/tests/concurrency.test.ts",
+    "modules/waibu-editorial/tests/private-access.test.ts",
+    "tools/acceptance.py",
+    "docs/acceptance/report.json",
+    "docs/acceptance/report.md",
+    "docs/acceptance/logs/*.log"
+  ],
+  "tests": [
+    {
+      "command": "node --test … modules/waibu-editorial/tests/concurrency.test.ts",
+      "exit_code": 0,
+      "evidence": "6 项通过：两个 worker 抢同一输入只执行一次、重投复用结果、被杀进程的 running 判中断后可重跑、同版本并发改稿只成功一个、批准与改稿并发不留悬空批准、来源撤回后旧批准不能再导出"
+    },
+    {
+      "command": "node --test … 全模块与架构测试",
+      "exit_code": 0,
+      "evidence": "260 项通过（含新增并发与四出口鉴权）"
+    },
+    {
+      "command": "/Users/rot/.dsh/.../python3 tools/acceptance.py",
+      "exit_code": 0,
+      "evidence": "10 个套件全部 exit=0：module-tests、board-page、review-page、revision-save、approve-export、feedback、settings、runs-panel、preview-copy、e2e-real；报告写到 docs/acceptance/report.json 与 report.md，每个套件的日志在 docs/acceptance/logs/<suite>.log"
+    }
+  ],
+  "acceptance": [
+    {
+      "case_id": "AC-038",
+      "result": "PASS",
+      "note": "验收用例表全量执行：tools/acceptance.py 把 10 个套件逐个真跑，记录命令、cwd、退出码、耗时与日志路径，产出 docs/acceptance/report.json（机器可读）与 report.md（人读）；44 条验收用例逐条列出状态、验证套件、退出码与证据位置。关键用例全部通过：10 个套件 exit_code 全为 0；并发与恢复另有 6 项专项用例覆盖（认领竞争、重投复用、中断恢复、并发改稿、批准与改稿竞态、来源撤回）。上游回归不退化：架构测试 14 项与模块 260 项全绿，包含引擎自身约束（迁就设计系统变量、剪贴板收敛、时区统一）。缺结果不得标 DONE：报告里 8 条 NOT_RUN 保留原状（AC-022 已复验通过并单独记录，AC-039 属 F39，AC-040~AC-044 属本轮范围之外的后继任务）。"
+    }
+  ],
+  "blockers": [],
+  "next_steps": ["F39 部署备份及回退"]
+}

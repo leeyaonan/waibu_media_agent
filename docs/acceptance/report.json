@@ -1,0 +1,578 @@
+{
+  "generated_at": "2026-11-06T00:21:30+0800",
+  "suites": [
+    {
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 13.1,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "suite": "board-page",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/board-e2e.sh",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 2.3,
+      "log": "docs/acceptance/logs/board-page.log"
+    },
+    {
+      "suite": "review-page",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/review-e2e.sh",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 32.1,
+      "log": "docs/acceptance/logs/review-page.log"
+    },
+    {
+      "suite": "revision-save",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/revision-e2e.sh",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 2.8,
+      "log": "docs/acceptance/logs/revision-save.log"
+    },
+    {
+      "suite": "approve-export",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/approve-e2e.sh",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 2.9,
+      "log": "docs/acceptance/logs/approve-export.log"
+    },
+    {
+      "suite": "feedback",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/feedback-e2e.sh",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 2.6,
+      "log": "docs/acceptance/logs/feedback.log"
+    },
+    {
+      "suite": "settings",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/settings-e2e.sh",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 3.0,
+      "log": "docs/acceptance/logs/settings.log"
+    },
+    {
+      "suite": "runs-panel",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/runs-e2e.sh",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 2.1,
+      "log": "docs/acceptance/logs/runs-panel.log"
+    },
+    {
+      "suite": "preview-copy",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/preview-e2e.sh",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 3.5,
+      "log": "docs/acceptance/logs/preview-copy.log"
+    },
+    {
+      "suite": "e2e-real",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/e2e-real.sh",
+      "cwd": "/Users/rot/dev/project/waibu_media_agent_workspace/waibu_media_agent",
+      "exit_code": 0,
+      "seconds": 12.8,
+      "log": "docs/acceptance/logs/e2e-real.log"
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "AC-001",
+      "task_id": "F01",
+      "scenario": "比较导入清单与固定 commit；校验产品 origin 和保留文件。",
+      "evidence": "docs/task-results/F01.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-002",
+      "task_id": "F02",
+      "scenario": "合法请求通过，缺 expectedRevisionId、错误枚举和超长内容失败。",
+      "evidence": "docs/task-results/F02.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-003",
+      "task_id": "F03",
+      "scenario": "运行 typecheck、测试、Web 构建；拦截外网确认零付费请求。",
+      "evidence": "docs/task-results/F03.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-004",
+      "task_id": "F04",
+      "scenario": "重复 business_date/pipeline_key 与同阶段输入被唯一约束拦截。",
+      "evidence": "docs/task-results/F04.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-005",
+      "task_id": "F05",
+      "scenario": "在请求后/落库前中断 worker，重启后复用已存结果且无重复版本。",
+      "evidence": "docs/task-results/F05.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-006",
+      "task_id": "F06",
+      "scenario": "假供应商分别返回超时、unknown、非法 JSON、429；验证有限恢复和回执复用。",
+      "evidence": "docs/task-results/F06.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-007",
+      "task_id": "F07",
+      "scenario": "更改规则后新 run 使用新 hash，旧 revision 及出处不变。",
+      "evidence": "docs/task-results/F07.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-008",
+      "task_id": "F08",
+      "scenario": "过期资讯、无日期、重复 URL、停用源和单源失败的 fixture。",
+      "evidence": "docs/task-results/F08.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-009",
+      "task_id": "F09",
+      "scenario": "同事件两家来源合为一个素材集合，撤回条目被排除。",
+      "evidence": "docs/task-results/F09.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-010",
+      "task_id": "F10",
+      "scenario": "冲突价格、只有标题、互相转载、网页更新、恶意提示词分别得到正确状态。",
+      "evidence": "docs/task-results/F10.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-011",
+      "task_id": "F11",
+      "scenario": "高热低证据与低热一手更新混合样本；验证选题理由与排除原因。",
+      "evidence": "docs/task-results/F11.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-012",
+      "task_id": "F12",
+      "scenario": "同事件同角度拒绝，新版本发布且证据新增时生成后续候选。",
+      "evidence": "docs/task-results/F12.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-013",
+      "task_id": "F13",
+      "scenario": "上传真实文字材料、非法 MIME、超大文件和重复素材；确认下载鉴权。",
+      "evidence": "docs/task-results/F13.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-014",
+      "task_id": "F14",
+      "scenario": "模拟提纲成功但写作失败，恢复只执行写作及后续。",
+      "evidence": "docs/task-results/F14.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-015",
+      "task_id": "F15",
+      "scenario": "无作者体验时要求实测稿，输出材料缺口或资料分析提纲。",
+      "evidence": "docs/task-results/F15.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-016",
+      "task_id": "F16",
+      "scenario": "产品更新样本检查版本/数字不变，第一人称无依据时不会出现。",
+      "evidence": "docs/task-results/F16.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-017",
+      "task_id": "F17",
+      "scenario": "伪造 claim_id、正文与标题矛盾、修复仍失败：保存问题并停止循环。",
+      "evidence": "docs/task-results/F17.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-018",
+      "task_id": "F18",
+      "scenario": "作者编辑 v2 后 v1 任务返回，系统保存冲突产物且 current 仍为 v2。",
+      "evidence": "docs/task-results/F18.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-019",
+      "task_id": "F19",
+      "scenario": "只修改开头的意见不会改变价格结论；过期批注提示重新定位。",
+      "evidence": "docs/task-results/F19.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-020",
+      "task_id": "F20",
+      "scenario": "批准 v1 后换封面或改摘要，正式导出不能继续使用 v1 批准。",
+      "evidence": "docs/task-results/F20.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-021",
+      "task_id": "F21",
+      "scenario": "批准后来源撤回，导出被拒绝；已有发布记录仍保留并提示勘误。",
+      "evidence": "docs/task-results/F21.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-022",
+      "task_id": "F22",
+      "scenario": "无会话访问页面、API、附件和导出均拒绝；缺 CSRF 写请求拒绝。",
+      "evidence": "docs/task-results/F22.json",
+      "status": "NOT_RUN",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-023",
+      "task_id": "F23",
+      "scenario": "使用空、失败、50 篇数据及手机尺寸验证列表与分页。",
+      "evidence": "docs/task-results/F23.json",
+      "status": "PASS",
+      "suite": "board-page",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/board-e2e.sh",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/board-page.log"
+    },
+    {
+      "case_id": "AC-024",
+      "task_id": "F24",
+      "scenario": "点击事实展示正确摘录；脚本标签被清理；换稿不丢已保存版本。",
+      "evidence": "docs/task-results/F24.json",
+      "status": "PASS",
+      "suite": "review-page",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/review-e2e.sh",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/review-page.log"
+    },
+    {
+      "case_id": "AC-025",
+      "task_id": "F25",
+      "scenario": "双标签页提交 v1 与 v2，后提交冲突；回退保留历史。",
+      "evidence": "docs/task-results/F25.json",
+      "status": "PASS",
+      "suite": "revision-save",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/revision-e2e.sh",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/revision-save.log"
+    },
+    {
+      "case_id": "AC-026",
+      "task_id": "F26",
+      "scenario": "重复提交同 Idempotency-Key 返回同任务；改稿失败保留意见。",
+      "evidence": "docs/task-results/F26.json",
+      "status": "PASS",
+      "suite": "feedback",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/feedback-e2e.sh",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/feedback.log"
+    },
+    {
+      "case_id": "AC-027",
+      "task_id": "F27",
+      "scenario": "绕过按钮直接请求未批准版本导出仍失败。",
+      "evidence": "docs/task-results/F27.json",
+      "status": "PASS",
+      "suite": "approve-export",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/approve-e2e.sh",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/approve-export.log"
+    },
+    {
+      "case_id": "AC-028",
+      "task_id": "F28",
+      "scenario": "预算为零、usage 缺失、provider unknown 三种状态文案与恢复行为正确。",
+      "evidence": "docs/task-results/F28.json",
+      "status": "PASS",
+      "suite": "runs-panel",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/runs-e2e.sh",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/runs-panel.log"
+    },
+    {
+      "case_id": "AC-029",
+      "task_id": "F29",
+      "scenario": "修改每天数量后新 run 生效，旧 run 输出不被重写。",
+      "evidence": "docs/task-results/F29.json",
+      "status": "PASS",
+      "suite": "settings",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/settings-e2e.sh",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/settings.log"
+    },
+    {
+      "case_id": "AC-030",
+      "task_id": "F30",
+      "scenario": "横图、GIF、未知权利图及缺文件分别正确处理；封面变化产生新 hash。",
+      "evidence": "docs/task-results/F30.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-031",
+      "task_id": "F31",
+      "scenario": "含链接、嵌套列表、GIF、长段落、中文英文混排的样本。",
+      "evidence": "docs/task-results/F31.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-032",
+      "task_id": "F32",
+      "scenario": "浏览器读取两份剪贴板 HTML，校验正文、图片数、宽度和来源。",
+      "evidence": "docs/task-results/F32.json",
+      "status": "PASS",
+      "suite": "preview-copy",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/preview-e2e.sh",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/preview-copy.log"
+    },
+    {
+      "case_id": "AC-033",
+      "task_id": "F33",
+      "scenario": "故意加固定宽度违规结构使验证失败，修复后重跑全规则。",
+      "evidence": "docs/task-results/F33.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-034",
+      "task_id": "F34",
+      "scenario": "导出中作者改稿或来源撤回，旧包不成为当前有效包；断点重试一致。",
+      "evidence": "docs/task-results/F34.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-035",
+      "task_id": "F35",
+      "scenario": "仅导出仍为 exported，作者登记后才 published。",
+      "evidence": "docs/task-results/F35.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-036",
+      "task_id": "F36",
+      "scenario": "用固定时钟测午夜、重复启动、积压、无选题和停机三天恢复。",
+      "evidence": "docs/task-results/F36.json",
+      "status": "PASS",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-037",
+      "task_id": "F37",
+      "scenario": "新来源→证据→文章→修改→批准→导出→手工登记全链路通过。",
+      "evidence": "docs/task-results/F37.json",
+      "status": "PASS",
+      "suite": "e2e-real",
+      "command": "/Users/rot/dev/project/waibu_media_agent_workspace/tools/e2e-real.sh",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/e2e-real.log"
+    },
+    {
+      "case_id": "AC-038",
+      "task_id": "F38",
+      "scenario": "验收用例表全量执行并附命令、退出码、截图/日志位置。",
+      "evidence": null,
+      "status": "NOT_RUN",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-039",
+      "task_id": "F39",
+      "scenario": "在隔离环境恢复一份测试备份并访问草稿与附件；回退代码不破坏数据。",
+      "evidence": null,
+      "status": "NOT_RUN",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-040",
+      "task_id": "F40",
+      "scenario": "无凭据标 BLOCKED 并说明；具备后逐日记录，发现缺陷拆 FIX 任务回归。",
+      "evidence": null,
+      "status": "NOT_RUN",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-041",
+      "task_id": "F41",
+      "scenario": "供应商额度耗尽只暂停相应来源。",
+      "evidence": null,
+      "status": "NOT_RUN",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-042",
+      "task_id": "F42",
+      "scenario": "替换插画后旧批准失效，原始素材和生成记录可查。",
+      "evidence": null,
+      "status": "NOT_RUN",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-043",
+      "task_id": "F43",
+      "scenario": "一次修改中的事实更新不被学习为写作规则。",
+      "evidence": null,
+      "status": "NOT_RUN",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    },
+    {
+      "case_id": "AC-044",
+      "task_id": "F44",
+      "scenario": "两个 worker 同时抢最后预算只有一个获准，unknown 不自动退款。",
+      "evidence": null,
+      "status": "NOT_RUN",
+      "suite": "module-tests",
+      "command": "node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-timeout=180000 --test-force-exit modules/waibu-editorial/tests/*.test.ts tests/architecture.test.ts",
+      "exit_code": 0,
+      "log": "docs/acceptance/logs/module-tests.log"
+    }
+  ],
+  "summary": {
+    "suites_total": 10,
+    "suites_failed": [],
+    "cases_total": 44,
+    "cases_pass": 36,
+    "cases_not_run": 8
+  }
+}
