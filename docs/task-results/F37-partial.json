@@ -4,20 +4,23 @@
   "plan_revision": "0.1.0",
   "base_commit": "ebbc88b",
   "branch": "develop",
-  "commits": ["4471c9e"],
+  "commits": ["4471c9e", "3eaa848"],
   "done": [
     "补齐 evidence/outline/draft/check 四个生产阶段实现并在 server.ts 装配（此前生产代码里一个 handler 都没注册）",
     "阶段产物存 waibu_steps.payload（迁移 0234），阶段之间靠产物衔接",
-    "端到端测试跑通：fixture 故事 → 证据 → 大纲 → 起草 → 自检 → 待审 → 作者改稿 → 批准 → 校验 → 导出 → 手工登记"
+    "阶段成功后事务提交再入队下一阶段；提交回滚不会留下悬空任务",
+    "新增 POST /runs 手动触发运行",
+    "端到端测试（测试进程内）：fixture → 证据 → 大纲 → 起草 → 自检 → 待审 → 改稿 → 批准 → 校验 → 导出 → 登记",
+    "真实进程联调：启动 model stub + api + worker（pg-boss），worker 在队列里成功执行 evidence 阶段并建出稿件与事实"
   ],
   "remaining": [
-    "在真实进程里跑（api + worker + pg-boss 队列），而不是测试内直接调 handler",
-    "浏览器内完成编辑闭环（页面 → 提交 → 看到新版本）",
-    "确认没有 mock 泄漏到生产装配路径、权限在整链路上不丢失"
+    "outline 阶段在真实队列里因模型输出不满足 schema 停下（stub 生成的 claim_ids 与真实事实编号对不上），要修 stub 或用真实模型",
+    "真实进程里跑完整条链路并核对每一步状态",
+    "浏览器内完成编辑闭环（权限不丢失）"
   ],
   "tests": [
-    {"command": "node --test … modules/waibu-editorial/tests/e2e-pipeline.test.ts", "exit_code": 0, "evidence": "2 项通过：全链路（真实数据库 + 本地模型 stub）与队列装配"},
+    {"command": "node --test … e2e-pipeline.test.ts", "exit_code": 0, "evidence": "2 项通过"},
     {"command": "node --test … 全模块与架构测试", "exit_code": 0, "evidence": "250 项通过"}
   ],
-  "note": "AC-037 要求“真实应用内完成编辑闭环”，目前只在测试进程内验证了链路，还不能算 PASS；下一轮起真实 api/worker 进程并用浏览器走一遍。"
+  "note": "AC-037 仍未 PASS：链路在测试进程内通了，真实进程只跑到证据阶段。"
 }
